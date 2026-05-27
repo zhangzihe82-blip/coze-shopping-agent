@@ -1,5 +1,5 @@
 import express from "express";
-import { LLMClient, SearchClient, Config, HeaderUtils } from "coze-coding-dev-sdk";
+import { SearchClient, Config, HeaderUtils } from "coze-coding-dev-sdk";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -7,6 +7,17 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = 5000;
+
+// ========== DeepSeek API 配置 ==========
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "";
+const DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1";
+const DEEPSEEK_MODEL = "deepseek-chat";
+
+if (!DEEPSEEK_API_KEY) {
+  console.warn("⚠️  未设置 DEEPSEEK_API_KEY 环境变量，请设置后重启服务");
+  console.warn("   PowerShell: $env:DEEPSEEK_API_KEY='your-key'");
+  console.warn("   CMD:        set DEEPSEEK_API_KEY=your-key");
+}
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
@@ -104,7 +115,7 @@ ${knowledgeBase.brand_info}
 
 // ========== 会话管理 ==========
 const sessions = new Map();
-const SESSION_TTL = 30 * 60 * 1000; // 30分钟过期
+const SESSION_TTL = 30 * 60 * 1000;
 
 function getSession(sessionId) {
   if (!sessions.has(sessionId)) {
@@ -115,7 +126,6 @@ function getSession(sessionId) {
   return s;
 }
 
-// 定期清理过期会话
 setInterval(() => {
   const now = Date.now();
   for (const [id, s] of sessions) {
@@ -125,38 +135,32 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
-// ========== 意图识别（增强版） ==========
+// ========== 意图识别 ==========
 function detectIntent(userMessage) {
   const msg = userMessage.toLowerCase();
 
-  // 对比意图
   if (/对比|比较|pk|vs|和.*哪个|还是.*好|选哪个|二选一|三选一|区别|差异|差别/.test(msg)) {
     return "compare";
   }
-  // 评价/口碑意图
   if (/评价|口碑|怎么样|好不好|评测|测评|真实|翻车|避雷|后悔|值得买|值不值/.test(msg)) {
     return "review";
   }
-  // 营销文案意图
   if (/文案|脚本|推广|营销|种草|直播|小红书|短视频|朋友圈|公众号|卖点|宣传/.test(msg)) {
     return "marketing";
   }
-  // 比价意图
   if (/价格|多少钱|贵不贵|便宜|划算|性价比|最低价|历史价|降价|涨价/.test(msg)) {
     return "price";
   }
-  // 推荐意图
   if (/推荐|买什么|求推荐|选购|挑选|选哪个|帮忙选|推荐下|求安利|种草|有没有.*推荐/.test(msg)) {
     return "recommend";
   }
-  // 送礼意图
   if (/送礼|礼物|送.*什么|生日礼物|节日礼物|情人节|母亲节|父亲节|圣诞节|新年礼物/.test(msg)) {
     return "gift";
   }
   return "chat";
 }
 
-// ========== 搜索增强 ==========
+// ========== 搜索增强（优雅降级） ==========
 async function searchWeb(query, customHeaders) {
   try {
     const config = new Config();
@@ -173,18 +177,86 @@ async function searchWeb(query, customHeaders) {
     }
     return "";
   } catch (e) {
-    console.error("Search error:", e.message);
+    console.error("Search error (搜索增强暂时不可用):", e.message);
     return "";
+  }
+}
+
+// ========== DeepSeek 流式调用 ==========
+async function* deepseekStream(messages) {
+  const response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${DEEPSEEK_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: DEEPSEEK_MODEL,
+      messages: messages,
+      temperature: 0.7,
+      max_tokens: 4096,
+      stream: true,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMsg;
+    try {
+      const err = JSON.parse(errorText);
+      errorMsg = err.error?.message || errorText;
+    } catch {
+      errorMsg = errorText;
+    }
+    throw new Error(`DeepSeek API 错误 (${response.status}): ${errorMsg}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || !trimmed.startsWith("data: ")) continue;
+      const data = trimmed.slice(6);
+      if (data === "[DONE]") return;
+
+      try {
+        const parsed = JSON.parse(data);
+        const content = parsed.choices?.[0]?.delta?.content;
+        if (content) {
+          yield { content };
+        }
+      } catch {
+        // 跳过解析失败的行
+      }
+    }
   }
 }
 
 // ========== API 路由 ==========
 
-// 对话接口（流式 SSE）
+// 对话接口（SSE 流式）
 app.post("/api/chat", async (req, res) => {
   const { message, session_id } = req.body;
   if (!message) {
     return res.status(400).json({ error: "message is required" });
+  }
+
+  if (!DEEPSEEK_API_KEY) {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.write(`data: ${JSON.stringify({ error: "未配置 DeepSeek API Key，请在启动时设置 DEEPSEEK_API_KEY 环境变量" })}\n\n`);
+    res.end();
+    return;
   }
 
   const sessionId = session_id || "default";
@@ -194,7 +266,7 @@ app.post("/api/chat", async (req, res) => {
   // 意图识别
   const intent = detectIntent(message);
 
-  // 对需要实时信息的意图进行搜索增强
+  // 搜索增强（优雅降级：搜索失败则跳过）
   let enhancedMessage = message;
   const searchIntents = ["recommend", "compare", "review", "price", "gift"];
   if (searchIntents.includes(intent)) {
@@ -228,28 +300,17 @@ app.post("/api/chat", async (req, res) => {
   res.setHeader("X-Accel-Buffering", "no");
 
   try {
-    const config = new Config();
-    const client = new LLMClient(config, customHeaders);
-    const stream = client.stream(messages, {
-      model: "doubao-seed-2-0-pro-260215",
-      temperature: 0.7,
-      max_tokens: 4096,
-    });
-
     let fullResponse = "";
-    for await (const chunk of stream) {
+    for await (const chunk of deepseekStream(messages)) {
       if (chunk.content) {
-        const text = chunk.content.toString();
-        fullResponse += text;
-        res.write(`data: ${JSON.stringify({ content: text })}\n\n`);
+        fullResponse += chunk.content;
+        res.write(`data: ${JSON.stringify({ content: chunk.content })}\n\n`);
       }
     }
 
-    // 保存对话历史
     session.messages.push({ role: "user", content: message });
     session.messages.push({ role: "assistant", content: fullResponse });
 
-    // 限制历史长度
     if (session.messages.length > 40) {
       session.messages = session.messages.slice(-40);
     }
@@ -258,12 +319,7 @@ app.post("/api/chat", async (req, res) => {
     res.end();
   } catch (error) {
     console.error("Chat error:", error);
-    const errMsg = error?.error?.code === "ErrBalanceOverdue"
-      ? "当前 LLM 资源配额不足，请稍后重试或联系管理员。"
-      : error?.error?.code === "ErrRateLimit"
-        ? "请求太频繁，请稍后再试。"
-        : "抱歉，生成回复时出现问题，请稍后重试。";
-    res.write(`data: ${JSON.stringify({ error: errMsg })}\n\n`);
+    res.write(`data: ${JSON.stringify({ error: error.message || "生成回复时出现问题，请稍后重试。" })}\n\n`);
     res.end();
   }
 });
@@ -291,7 +347,7 @@ app.delete("/api/chat/:session_id", (req, res) => {
 
 // 健康检查
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", sessions: sessions.size });
+  res.json({ status: "ok", sessions: sessions.size, llm: "deepseek-chat" });
 });
 
 // SPA 入口
@@ -301,4 +357,10 @@ app.get("/", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`🛍️  灵犀导购已启动 → http://localhost:${PORT}`);
+  console.log(`🧠 LLM: DeepSeek (${DEEPSEEK_MODEL})`);
+  if (DEEPSEEK_API_KEY) {
+    console.log(`🔑 DeepSeek API Key: ${DEEPSEEK_API_KEY.slice(0, 8)}...${DEEPSEEK_API_KEY.slice(-4)}`);
+  } else {
+    console.warn(`⚠️  请设置 DEEPSEEK_API_KEY 环境变量`);
+  }
 });
