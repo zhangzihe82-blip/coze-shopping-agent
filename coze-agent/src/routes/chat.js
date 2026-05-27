@@ -9,15 +9,16 @@ import { SYSTEM_PROMPT } from "../agent/systemPrompt.js";
 const router = Router();
 
 router.post("/", async (req, res) => {
-  const { message, session_id } = req.body;
+  const { message, session_id, api_key } = req.body;
   if (!message) {
     return res.status(400).json({ error: "message is required" });
   }
 
-  if (!DEEPSEEK_API_KEY) {
+  const effectiveKey = api_key || DEEPSEEK_API_KEY;
+  if (!effectiveKey) {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
-    res.write(`data: ${JSON.stringify({ error: "未配置 DeepSeek API Key，请在启动时设置 DEEPSEEK_API_KEY 环境变量" })}\n\n`);
+    res.write(`data: ${JSON.stringify({ error: "未配置 DeepSeek API Key，请在设置中填入或设置环境变量" })}\n\n`);
     res.end();
     return;
   }
@@ -55,7 +56,7 @@ router.post("/", async (req, res) => {
 
   try {
     let fullResponse = "";
-    for await (const chunk of deepseekStream(messages)) {
+    for await (const chunk of deepseekStream(messages, effectiveKey)) {
       if (chunk.content) {
         fullResponse += chunk.content;
         res.write(`data: ${JSON.stringify({ content: chunk.content })}\n\n`);

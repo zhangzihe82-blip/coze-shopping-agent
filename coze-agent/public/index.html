@@ -111,6 +111,30 @@
       color: var(--text);
     }
 
+    .btn-icon {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      color: var(--text-secondary);
+      border: none;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .btn-icon:hover {
+      background: rgba(0,0,0,0.04);
+      color: var(--text);
+    }
+
+    .btn-icon.active {
+      background: rgba(0,0,0,0.06);
+      color: var(--accent);
+    }
+
     .btn-primary {
       background: var(--accent);
       color: #fff;
@@ -381,6 +405,173 @@
       margin-right: auto;
     }
 
+    /* ─── Settings Modal ─── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s ease;
+    }
+    .overlay.hidden { display: none; }
+
+    .modal {
+      background: var(--surface);
+      border-radius: 20px;
+      width: 420px;
+      max-width: 92vw;
+      box-shadow: var(--shadow-lg);
+      animation: scaleIn 0.25s ease;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 20px 24px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header h2 {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0,0,0,0.04);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+    }
+    .modal-close:hover { background: rgba(0,0,0,0.1); color: var(--text); }
+
+    .modal-body {
+      padding: 20px 24px 24px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .field-desc {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .key-input-row {
+      display: flex;
+      gap: 8px;
+    }
+    .key-input-wrap {
+      flex: 1;
+      position: relative;
+    }
+    .key-input {
+      width: 100%;
+      height: 40px;
+      padding: 0 40px 0 14px;
+      border: 1.5px solid var(--border-light);
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: var(--text);
+      background: var(--surface-secondary);
+      transition: all var(--transition);
+      outline: none;
+    }
+    .key-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,113,227,0.1);
+      background: var(--surface);
+    }
+    .key-input::placeholder { font-family: 'Inter', 'Noto Sans SC', sans-serif; font-size: 13px; color: #BFBFBF; }
+
+    .toggle-vis {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      border: none;
+      background: transparent;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all var(--transition);
+    }
+    .toggle-vis:hover { color: var(--text); background: rgba(0,0,0,0.04); }
+
+    .test-btn {
+      height: 40px;
+      padding: 0 16px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all var(--transition);
+    }
+    .test-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .test-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .test-result {
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      min-height: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .test-result.success { color: #34C759; }
+    .test-result.fail { color: #FF3B30; }
+    .test-result.testing { color: var(--accent); }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .status-dot.ok { background: #34C759; box-shadow: 0 0 6px rgba(52,199,89,0.4); }
+    .status-dot.bad { background: #FF3B30; box-shadow: 0 0 6px rgba(255,59,48,0.4); }
+    .status-dot.spin {
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      animation: spin 0.6s linear infinite;
+      background: transparent;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     /* ─── Animations ─── */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(12px); }
@@ -414,6 +605,9 @@
       灵犀导购
     </div>
     <div class="nav-actions">
+      <button class="btn-icon" id="btnSettings" title="设置 API Key">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
       <button class="nav-btn btn-ghost" id="btnClear" title="清空对话">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
       </button>
@@ -460,6 +654,32 @@
     </div>
   </div>
 
+  <!-- ─── Settings Overlay ─── -->
+  <div class="overlay hidden" id="settingsOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>DeepSeek API 设置</h2>
+        <button class="modal-close" id="btnModalClose">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <label class="field-label">API Key</label>
+        <p class="field-desc">填入你的 DeepSeek API Key，用于驱动导购助手的大模型能力。<br>Key 仅保存在浏览器本地，不会上传到服务器。</p>
+        <div class="key-input-row">
+          <div class="key-input-wrap">
+            <input type="password" class="key-input" id="apiKeyInput" placeholder="sk-..." autocomplete="off" spellcheck="false" />
+            <button class="toggle-vis" id="btnToggleVis" title="显示/隐藏">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <button class="test-btn" id="btnTestKey">测试连接</button>
+        </div>
+        <div class="test-result" id="testResult"></div>
+      </div>
+    </div>
+  </div>
+
   <script>
     (function() {
       const chatScroll = document.getElementById('chatScroll');
@@ -467,11 +687,111 @@
       const btnSend = document.getElementById('btnSend');
       const btnClear = document.getElementById('btnClear');
       const btnNewChat = document.getElementById('btnNewChat');
+      const btnSettings = document.getElementById('btnSettings');
+      const settingsOverlay = document.getElementById('settingsOverlay');
+      const apiKeyInput = document.getElementById('apiKeyInput');
+      const btnTestKey = document.getElementById('btnTestKey');
+      const btnToggleVis = document.getElementById('btnToggleVis');
+      const btnModalClose = document.getElementById('btnModalClose');
+      const testResult = document.getElementById('testResult');
       const welcomeScreen = document.getElementById('welcomeScreen');
       const suggestionGrid = document.getElementById('suggestionGrid');
 
       let isStreaming = false;
       let sessionId = 's_' + Date.now();
+      let apiKey = '';
+
+      // ─── Settings ───
+      function loadApiKey() {
+        try { apiKey = localStorage.getItem('deepseek_api_key') || ''; }
+        catch(e) { apiKey = ''; }
+        apiKeyInput.value = apiKey;
+        updateStatusDot();
+      }
+      loadApiKey();
+
+      function saveApiKey(key) {
+        apiKey = key;
+        try { localStorage.setItem('deepseek_api_key', key); } catch(e) {}
+        updateStatusDot();
+      }
+
+      function updateStatusDot() {
+        if (apiKey) {
+          btnSettings.classList.add('active');
+        } else {
+          btnSettings.classList.remove('active');
+        }
+      }
+
+      function showSettings() {
+        settingsOverlay.classList.remove('hidden');
+        apiKeyInput.focus();
+      }
+      function hideSettings() {
+        settingsOverlay.classList.add('hidden');
+        testResult.className = 'test-result';
+        testResult.innerHTML = '';
+      }
+
+      btnSettings.addEventListener('click', showSettings);
+      btnModalClose.addEventListener('click', hideSettings);
+      settingsOverlay.addEventListener('click', function(e) {
+        if (e.target === settingsOverlay) hideSettings();
+      });
+
+      btnToggleVis.addEventListener('click', function() {
+        var isPass = apiKeyInput.type === 'password';
+        apiKeyInput.type = isPass ? 'text' : 'password';
+        btnToggleVis.innerHTML = isPass
+          ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+          : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+      });
+
+      apiKeyInput.addEventListener('input', function() {
+        saveApiKey(this.value.trim());
+      });
+
+      btnTestKey.addEventListener('click', function() {
+        var key = apiKeyInput.value.trim();
+        if (!key) {
+          testResult.className = 'test-result fail';
+          testResult.innerHTML = '<span class="status-dot bad"></span> 请先填入 API Key';
+          return;
+        }
+        testResult.className = 'test-result testing';
+        testResult.innerHTML = '<span class="status-dot spin"></span> 正在测试连接...';
+        btnTestKey.disabled = true;
+
+        fetch('/api/test-key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ api_key: key })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          btnTestKey.disabled = false;
+          if (d.ok) {
+            testResult.className = 'test-result success';
+            testResult.innerHTML = '<span class="status-dot ok"></span> ' + d.message;
+            saveApiKey(key);
+          } else {
+            testResult.className = 'test-result fail';
+            testResult.innerHTML = '<span class="status-dot bad"></span> ' + (d.error || '连接失败');
+          }
+        })
+        .catch(function(e) {
+          btnTestKey.disabled = false;
+          testResult.className = 'test-result fail';
+          testResult.innerHTML = '<span class="status-dot bad"></span> 网络请求失败，请检查网络';
+        });
+      });
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !settingsOverlay.classList.contains('hidden')) {
+          hideSettings();
+        }
+      });
 
       // ─── Markdown renderer ───
       function renderMD(text) {
@@ -574,7 +894,7 @@
         fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: message, session_id: sessionId })
+          body: JSON.stringify({ message: message, session_id: sessionId, api_key: apiKey })
         })
         .then(function(res) {
           if (!res.ok) throw new Error('HTTP ' + res.status);

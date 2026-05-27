@@ -1,11 +1,12 @@
-import { DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, DEEPSEEK_MODEL } from "../config/deepseek.js";
+import { DEEPSEEK_BASE_URL, DEEPSEEK_MODEL } from "../config/deepseek.js";
 
-async function* deepseekStream(messages) {
+async function* deepseekStream(messages, apiKey = "") {
+  const key = apiKey || process.env.DEEPSEEK_API_KEY || "";
   const response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${DEEPSEEK_API_KEY}`,
+      "Authorization": `Bearer ${key}`,
     },
     body: JSON.stringify({
       model: DEEPSEEK_MODEL,
