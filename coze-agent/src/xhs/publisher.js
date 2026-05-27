@@ -56,4 +56,17 @@ function getPublishById(id) {
   return loadHistory().find((h) => h.id === id);
 }
 
-export { publishToXHS, getPublishHistory, getPublishById };
+function deletePublishById(id) {
+  const history = loadHistory();
+  const filtered = history.filter((h) => h.id !== id);
+  if (filtered.length === history.length) return false;
+  fs.writeFileSync(HISTORY_PATH, JSON.stringify(filtered, null, 2), "utf-8");
+  return true;
+}
+
+function clearAllHistory() {
+  fs.writeFileSync(HISTORY_PATH, JSON.stringify([], null, 2), "utf-8");
+  return true;
+}
+
+export { publishToXHS, getPublishHistory, getPublishById, deletePublishById, clearAllHistory };

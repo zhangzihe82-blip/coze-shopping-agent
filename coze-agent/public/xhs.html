@@ -371,7 +371,12 @@
 
     <!-- History Section -->
     <div style="margin-top:48px;" id="historySection">
-      <h3 style="font-size:18px;font-weight:600;margin-bottom:16px;">📋 发布历史</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h3 style="font-size:18px;font-weight:600;">📋 发布历史</h3>
+        <button class="btn btn-secondary" id="btnClearAll" style="height:34px;font-size:12px;padding:0 14px;color:#FF3B30;border-color:#FF3B30;display:none;">
+          🗑 一键清空
+        </button>
+      </div>
       <div id="historyList">
         <p style="color:var(--text-tertiary);font-size:14px;">暂无发布记录</p>
       </div>
@@ -622,27 +627,61 @@
       });
 
       // ─── History ───
+      const btnClearAll = document.getElementById('btnClearAll');
+
       function loadHistory() {
         fetch('/api/xhs/history')
           .then(function(r) { return r.json(); })
           .then(function(d) {
             if (!d.history || d.history.length === 0) {
               historyList.innerHTML = '<p style="color:var(--text-tertiary);font-size:14px;">暂无发布记录</p>';
+              btnClearAll.style.display = 'none';
               return;
             }
+            btnClearAll.style.display = '';
             historyList.innerHTML = '<table class="history-table"><thead><tr>' +
-              '<th>标题</th><th>标签</th><th>时间</th><th>状态</th></tr></thead><tbody>' +
+              '<th>标题</th><th>标签</th><th>时间</th><th>状态</th><th style="width:50px;"></th></tr></thead><tbody>' +
               d.history.map(function(h) {
-                return '<tr>' +
+                return '<tr id="row-' + h.id + '">' +
                   '<td><strong>' + h.title + '</strong></td>' +
                   '<td>' + (h.tags||[]).map(function(t){return '<span class="note-tag" style="font-size:11px;">'+t+'</span>';}).join(' ') + '</td>' +
                   '<td>' + new Date(h.createdAt).toLocaleString('zh-CN') + '</td>' +
                   '<td><span class="badge ' + (h.status==='ready'?'badge-ok':'badge-info') + '">' + (h.status==='ready'?'待发布':'已记录') + '</span></td>' +
+                  '<td><button class="btn-del-row" data-id="' + h.id + '" title="删除此条" style="background:none;border:none;color:#FF3B30;cursor:pointer;font-size:16px;opacity:0.5;transition:all 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">&times;</button></td>' +
                   '</tr>';
               }).join('') +
               '</tbody></table>';
+
+            // 单独删除
+            historyList.querySelectorAll('.btn-del-row').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                var id = this.dataset.id;
+                if (!confirm('确定删除这条发布记录吗？')) return;
+                var row = document.getElementById('row-' + id);
+                if (row) row.style.opacity = '0.3';
+                fetch('/api/xhs/history/' + id, { method: 'DELETE' })
+                  .then(function(r) { return r.json(); })
+                  .then(function(res) {
+                    if (res.ok) loadHistory();
+                    else { alert('删除失败'); if (row) row.style.opacity = '1'; }
+                  })
+                  .catch(function() { alert('请求失败'); if (row) row.style.opacity = '1'; });
+              });
+            });
           });
       }
+
+      // 一键清空
+      btnClearAll.addEventListener('click', function() {
+        if (!confirm('确定清空全部发布历史吗？此操作不可撤销。')) return;
+        fetch('/api/xhs/history', { method: 'DELETE' })
+          .then(function(r) { return r.json(); })
+          .then(function(res) {
+            if (res.ok) loadHistory();
+            else alert('清空失败');
+          });
+      });
+
       loadHistory();
     })();
   </script>

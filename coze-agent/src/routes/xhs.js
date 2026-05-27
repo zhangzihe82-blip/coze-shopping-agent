@@ -4,7 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { saveAccount, getAccount, disconnectAccount } from "../xhs/account.js";
 import { generateCopy, generateCopyVariants } from "../xhs/contentGen.js";
-import { publishToXHS, getPublishHistory } from "../xhs/publisher.js";
+import { publishToXHS, getPublishHistory, deletePublishById, clearAllHistory } from "../xhs/publisher.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const router = Router();
@@ -112,6 +112,22 @@ router.delete("/xhs/account", (req, res) => {
 // 发布历史
 router.get("/xhs/history", (req, res) => {
   res.json({ ok: true, history: getPublishHistory() });
+});
+
+// 删除单条历史
+router.delete("/xhs/history/:id", (req, res) => {
+  const deleted = deletePublishById(req.params.id);
+  if (deleted) {
+    res.json({ ok: true });
+  } else {
+    res.status(404).json({ ok: false, error: "记录不存在" });
+  }
+});
+
+// 一键清空全部历史
+router.delete("/xhs/history", (req, res) => {
+  clearAllHistory();
+  res.json({ ok: true });
 });
 
 export default router;
