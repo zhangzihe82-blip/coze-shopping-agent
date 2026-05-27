@@ -6,6 +6,7 @@ import chatRouter from "./src/routes/chat.js";
 import suggestionsRouter from "./src/routes/suggestions.js";
 import healthRouter from "./src/routes/health.js";
 import settingsRouter from "./src/routes/settings.js";
+import xhsRouter from "./src/routes/xhs.js";
 import { deleteSession } from "./src/agent/sessionManager.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -20,6 +21,12 @@ app.use("/api/chat", chatRouter);
 app.use("/api/suggestions", suggestionsRouter);
 app.use("/api/health", healthRouter);
 app.use("/api", settingsRouter);
+app.use("/api", xhsRouter);
+
+// 小红书发布页面
+app.get("/xhs", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "xhs.html"));
+});
 
 // 清空对话
 app.delete("/api/chat/:session_id", (req, res) => {

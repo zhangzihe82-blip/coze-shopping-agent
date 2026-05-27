@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>小红书发布 — 灵犀导购</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #FF2442;
+      --accent-hover: #E8203A;
+      --accent-light: #FFF0F3;
+      --bg: #F5F5F7;
+      --surface: #FFFFFF;
+      --surface-secondary: #FAFAFA;
+      --text: #1D1D1F;
+      --text-secondary: #6E6E73;
+      --text-tertiary: #86868B;
+      --border: #D2D2D7;
+      --border-light: #E8E8ED;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+      --shadow: 0 2px 12px rgba(0,0,0,0.06);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
+      --radius: 20px;
+      --radius-sm: 14px;
+      --radius-xs: 10px;
+      --transition: 0.3s cubic-bezier(0.25,0.1,0.25,1);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter','Noto Sans SC',-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── Nav ─── */
+    .navbar {
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      padding: 0 24px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-left { display: flex; align-items: center; gap: 24px; }
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 17px; font-weight: 600; color: var(--text);
+      letter-spacing: -0.2px; text-decoration: none;
+    }
+    .nav-back {
+      font-size: 13px; color: var(--accent); text-decoration: none;
+      font-weight: 500; display: flex; align-items: center; gap: 4px;
+    }
+    .nav-back:hover { text-decoration: underline; }
+    .nav-logo {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, #FF2442, #FF6B81);
+      border-radius: 9px; display: flex; align-items: center;
+      justify-content: center; font-size: 16px;
+    }
+
+    /* ─── Page Layout ─── */
+    .page { max-width: 900px; margin: 0 auto; padding: 32px 24px 60px; }
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.4px; margin-bottom: 6px; }
+    .page-header p { font-size: 15px; color: var(--text-secondary); }
+
+    /* ─── Steps indicator ─── */
+    .steps { display: flex; gap: 0; margin-bottom: 32px; }
+    .step {
+      flex: 1; display: flex; align-items: center; gap: 8px;
+      padding: 10px 16px; font-size: 13px; font-weight: 500;
+      color: var(--text-tertiary); border-bottom: 2px solid var(--border-light);
+      transition: all var(--transition); cursor: pointer;
+    }
+    .step .step-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(0,0,0,0.06); color: var(--text-tertiary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; transition: all var(--transition);
+    }
+    .step.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .step.active .step-num { background: var(--accent); color: #fff; }
+    .step.done { color: #34C759; border-bottom-color: #34C759; }
+    .step.done .step-num { background: #34C759; color: #fff; }
+
+    /* ─── Panel ─── */
+    .panel { display: none; animation: fadeUp 0.35s ease; }
+    .panel.active { display: block; }
+
+    /* ─── Upload Zone ─── */
+    .upload-zone {
+      border: 2px dashed var(--border); border-radius: var(--radius);
+      padding: 48px 24px; text-align: center; cursor: pointer;
+      transition: all var(--transition); background: var(--surface-secondary);
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--accent); background: var(--accent-light);
+    }
+    .upload-zone svg { margin-bottom: 12px; opacity: 0.5; }
+    .upload-zone h3 { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
+    .upload-zone p { font-size: 13px; color: var(--text-tertiary); }
+
+    .preview-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px; margin-top: 16px;
+    }
+    .preview-item {
+      position: relative; border-radius: var(--radius-xs);
+      overflow: hidden; aspect-ratio: 1; background: #000;
+    }
+    .preview-item img, .preview-item video {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .preview-item .remove-btn {
+      position: absolute; top: 6px; right: 6px;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(0,0,0,0.55); color: #fff;
+      border: none; cursor: pointer; font-size: 12px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ─── Form ─── */
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: block; font-size: 13px; font-weight: 500;
+      color: var(--text); margin-bottom: 6px;
+    }
+    .form-hint { font-size: 12px; color: var(--text-tertiary); margin-bottom: 6px; }
+    .form-textarea {
+      width: 100%; min-height: 100px; padding: 12px 14px;
+      border: 1.5px solid var(--border-light); border-radius: var(--radius-xs);
+      font-size: 14px; font-family: inherit; line-height: 1.6;
+      color: var(--text); background: var(--surface); resize: vertical;
+      outline: none; transition: all var(--transition);
+    }
+    .form-textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255,36,66,0.1);
+    }
+    .form-input {
+      width: 100%; height: 42px; padding: 0 14px;
+      border: 1.5px solid var(--border-light); border-radius: var(--radius-xs);
+      font-size: 14px; font-family: inherit; color: var(--text);
+      background: var(--surface); outline: none; transition: all var(--transition);
+    }
+    .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255,36,66,0.1);
+    }
+
+    /* ─── Buttons ─── */
+    .btn {
+      height: 42px; padding: 0 22px; border-radius: 10px;
+      border: none; font-size: 14px; font-weight: 500;
+      font-family: inherit; cursor: pointer; transition: all var(--transition);
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-primary {
+      background: var(--accent); color: #fff;
+      box-shadow: 0 2px 8px rgba(255,36,66,0.3);
+    }
+    .btn-primary:hover { background: var(--accent-hover); transform: scale(1.02); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn-secondary {
+      background: var(--surface); color: var(--text);
+      border: 1.5px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+
+    /* ─── Preview Card ─── */
+    .note-preview {
+      background: #FFF; border: 1px solid var(--border-light);
+      border-radius: var(--radius); overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .note-preview-header {
+      padding: 14px 18px; border-bottom: 1px solid var(--border-light);
+      font-size: 13px; font-weight: 500; color: var(--text-secondary);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .note-preview-body { padding: 18px; }
+    .note-preview-title {
+      font-size: 18px; font-weight: 600; margin-bottom: 12px;
+      line-height: 1.4;
+    }
+    .note-preview-text {
+      font-size: 14px; line-height: 1.8; color: var(--text);
+      white-space: pre-wrap;
+    }
+    .note-preview-tags {
+      margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    .note-tag {
+      font-size: 12px; color: var(--accent); background: var(--accent-light);
+      padding: 4px 10px; border-radius: 100px;
+    }
+
+    .note-preview-images {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+    }
+    .note-preview-images img {
+      width: 100%; aspect-ratio: 1; object-fit: cover;
+    }
+
+    /* ─── Status Badge ─── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 12px; font-weight: 500; padding: 5px 10px;
+      border-radius: 100px;
+    }
+    .badge-ok { background: #E8F8EE; color: #34C759; }
+    .badge-warn { background: #FFF3E0; color: #FF9500; }
+    .badge-info { background: #E8F4FD; color: var(--accent); }
+
+    /* ─── History Table ─── */
+    .history-table { width: 100%; border-collapse: collapse; }
+    .history-table th {
+      text-align: left; font-size: 12px; font-weight: 500;
+      color: var(--text-tertiary); padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .history-table td {
+      padding: 12px; font-size: 13px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    /* ─── Account Card ─── */
+    .account-card {
+      display: flex; align-items: center; gap: 14px;
+      padding: 18px; background: var(--surface); border-radius: var(--radius);
+      border: 1px solid var(--border-light); box-shadow: var(--shadow-sm);
+    }
+    .account-avatar {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: linear-gradient(135deg, #FF2442, #FF6B81);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-left">
+      <a class="nav-brand" href="/">
+        <div class="nav-logo">📕</div>灵犀导购 · 小红书发布
+      </a>
+      <a class="nav-back" href="/">← 返回导购</a>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="page-header">
+      <h1>小红书种草笔记发布</h1>
+      <p>上传素材 → AI生成文案 → 一键发布，全流程自动化</p>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps">
+      <div class="step active" data-step="1">
+        <span class="step-num">1</span>上传素材
+      </div>
+      <div class="step" data-step="2">
+        <span class="step-num">2</span>AI生成文案
+      </div>
+      <div class="step" data-step="3">
+        <span class="step-num">3</span>预览确认
+      </div>
+      <div class="step" data-step="4">
+        <span class="step-num">4</span>一键发布
+      </div>
+    </div>
+
+    <!-- Panel 1: Upload -->
+    <div class="panel active" id="panelUpload">
+      <div class="form-group">
+        <label class="form-label">上传图片或视频</label>
+        <p class="form-hint">支持 JPG/PNG/GIF/WEBP/MP4，最多9个文件，单文件不超过50MB</p>
+      </div>
+      <div class="upload-zone" id="uploadZone">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <h3>点击或拖拽上传素材</h3>
+        <p>上传商品图片/视频，AI将据此生成种草内容</p>
+        <input type="file" id="fileInput" multiple accept="image/*,video/*" style="display:none" />
+      </div>
+      <div class="preview-grid" id="previewGrid"></div>
+
+      <div class="form-group" style="margin-top:18px;">
+        <label class="form-label">商品描述</label>
+        <p class="form-hint">告诉AI你想推广什么商品，描述越详细生成的文案越精准</p>
+        <textarea class="form-textarea" id="productDesc"
+          placeholder="例如：一款适合学生党的平价蓝牙耳机，售价199元，降噪效果好，续航30小时，有黑/白/粉三色可选，主打性价比和颜值..."
+        ></textarea>
+      </div>
+
+      <button class="btn btn-primary" id="btnGenCopy">
+        ✨ 生成种草文案
+      </button>
+    </div>
+
+    <!-- Panel 2: AI Copy Result -->
+    <div class="panel" id="panelCopy">
+      <div id="copyResults"></div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" id="btnRegenerate">🔄 换一批风格</button>
+        <button class="btn btn-primary" id="btnToPreview">→ 下一步：预览确认</button>
+      </div>
+    </div>
+
+    <!-- Panel 3: Preview -->
+    <div class="panel" id="panelPreview">
+      <div class="form-group">
+        <label class="form-label">笔记标题</label>
+        <input class="form-input" id="finalTitle" placeholder="笔记标题" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">笔记正文</label>
+        <textarea class="form-textarea" id="finalBody" style="min-height:160px;"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">话题标签</label>
+        <input class="form-input" id="finalTags" placeholder="#种草 #好物推荐" />
+      </div>
+      <div class="note-preview" style="margin-bottom:16px;">
+        <div class="note-preview-header">📱 发布预览</div>
+        <div class="note-preview-images" id="noteImages"></div>
+        <div class="note-preview-body">
+          <div class="note-preview-title" id="noteTitle"></div>
+          <div class="note-preview-text" id="noteBody"></div>
+          <div class="note-preview-tags" id="noteTags"></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btnPublish">
+        🚀 一键发布到小红书
+      </button>
+    </div>
+
+    <!-- Panel 4: Published -->
+    <div class="panel" id="panelDone">
+      <div style="text-align:center;padding:40px 0;" id="doneContent">
+        <div style="font-size:56px;margin-bottom:16px;">🎉</div>
+        <h2>笔记已生成并提交发布</h2>
+        <p style="color:var(--text-secondary);margin-top:8px;" id="doneMsg"></p>
+      </div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="btn btn-secondary" id="btnNewPost">📝 发布新笔记</button>
+        <button class="btn btn-primary" id="btnViewHistory">📋 查看发布历史</button>
+      </div>
+    </div>
+
+    <!-- History Section -->
+    <div style="margin-top:48px;" id="historySection">
+      <h3 style="font-size:18px;font-weight:600;margin-bottom:16px;">📋 发布历史</h3>
+      <div id="historyList">
+        <p style="color:var(--text-tertiary);font-size:14px;">暂无发布记录</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const uploadZone = document.getElementById('uploadZone');
+      const fileInput = document.getElementById('fileInput');
+      const previewGrid = document.getElementById('previewGrid');
+      const productDesc = document.getElementById('productDesc');
+      const btnGenCopy = document.getElementById('btnGenCopy');
+      const btnRegenerate = document.getElementById('btnRegenerate');
+      const btnToPreview = document.getElementById('btnToPreview');
+      const btnPublish = document.getElementById('btnPublish');
+      const btnNewPost = document.getElementById('btnNewPost');
+      const btnViewHistory = document.getElementById('btnViewHistory');
+      const historyList = document.getElementById('historyList');
+      const historySection = document.getElementById('historySection');
+
+      let uploadedFiles = [];
+      let currentCopy = null;
+      let currentVariants = null;
+      let apiKey = '';
+      try { apiKey = localStorage.getItem('deepseek_api_key') || ''; } catch(e) {}
+
+      // ─── Upload ───
+      uploadZone.addEventListener('click', function() { fileInput.click(); });
+      uploadZone.addEventListener('dragover', function(e) { e.preventDefault(); this.classList.add('drag-over'); });
+      uploadZone.addEventListener('dragleave', function() { this.classList.remove('drag-over'); });
+      uploadZone.addEventListener('drop', function(e) {
+        e.preventDefault(); this.classList.remove('drag-over');
+        handleFiles(e.dataTransfer.files);
+      });
+      fileInput.addEventListener('change', function() { handleFiles(this.files); });
+
+      function handleFiles(files) {
+        var formData = new FormData();
+        for (var i = 0; i < files.length; i++) {
+          formData.append('files', files[i]);
+        }
+        fetch('/api/xhs/upload', { method: 'POST', body: formData })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d.ok) {
+              uploadedFiles = d.files;
+              renderPreviews();
+            }
+          })
+          .catch(function(e) { alert('上传失败: ' + e.message); });
+      }
+
+      function renderPreviews() {
+        previewGrid.innerHTML = uploadedFiles.map(function(f, i) {
+          var isVideo = f.type.startsWith('video/');
+          return '<div class="preview-item">' +
+            (isVideo
+              ? '<video src="' + f.url + '" muted></video>'
+              : '<img src="' + f.url + '" alt="" />') +
+            '<button class="remove-btn" data-idx="' + i + '">&times;</button>' +
+            '</div>';
+        }).join('');
+        previewGrid.querySelectorAll('.remove-btn').forEach(function(btn) {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            uploadedFiles.splice(parseInt(this.dataset.idx), 1);
+            renderPreviews();
+          });
+        });
+      }
+
+      // ─── Steps nav ───
+      function goStep(n) {
+        document.querySelectorAll('.step').forEach(function(s, i) {
+          s.classList.remove('active','done');
+          if (i < n-1) s.classList.add('done');
+          if (i === n-1) s.classList.add('active');
+        });
+        document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+        var panelIds = ['panelUpload','panelCopy','panelPreview','panelDone'];
+        var panel = document.getElementById(panelIds[n-1]);
+        if (panel) panel.classList.add('active');
+      }
+
+      document.querySelectorAll('.step').forEach(function(step) {
+        step.addEventListener('click', function() {
+          var n = parseInt(this.dataset.step);
+          if (n <= 1) goStep(1);
+          else if (n === 2 && currentCopy) goStep(2);
+          else if (n === 3 && currentCopy) goStep(3);
+        });
+      });
+
+      // ─── Generate Copy ───
+      btnGenCopy.addEventListener('click', function() {
+        var desc = productDesc.value.trim();
+        if (!desc) { alert('请先输入商品描述'); return; }
+
+        btnGenCopy.disabled = true;
+        btnGenCopy.textContent = '⏳ 正在生成文案...';
+
+        fetch('/api/xhs/generate-copy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ product_info: desc, api_key: apiKey, variants: true })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          btnGenCopy.disabled = false;
+          btnGenCopy.textContent = '✨ 生成种草文案';
+          if (d.ok) {
+            currentVariants = d.variants;
+            currentCopy = d.variants[0];
+            renderCopyResults();
+            goStep(2);
+          } else {
+            alert('生成失败: ' + (d.error || '未知错误'));
+          }
+        })
+        .catch(function(e) {
+          btnGenCopy.disabled = false;
+          btnGenCopy.textContent = '✨ 生成种草文案';
+          alert('请求失败: ' + e.message);
+        });
+      });
+
+      function renderCopyResults() {
+        var html = '<h3 style="margin-bottom:14px;font-size:16px;">选择你喜欢的文案风格</h3>';
+        var styleLabels = ['真实体验风', '干货测评风', '场景种草风'];
+        currentVariants.forEach(function(v, i) {
+          html += '<div class="note-preview" style="margin-bottom:14px;cursor:pointer;" data-vidx="' + i + '">' +
+            '<div class="note-preview-header">' + styleLabels[i] + (i===0?' <span class="badge badge-ok">推荐</span>':'') + '</div>' +
+            '<div class="note-preview-body">' +
+            '<div class="note-preview-title">' + (v.title || '(生成中...)') + '</div>' +
+            '<div class="note-preview-text">' + (v.body || '').slice(0, 150) + '...</div>' +
+            '<div class="note-preview-tags">' + (v.tags || '').split(/\s+/).filter(Boolean).map(function(t) {
+              return '<span class="note-tag">' + t + '</span>';
+            }).join('') + '</div>' +
+            '</div></div>';
+        });
+        document.getElementById('copyResults').innerHTML = html;
+
+        // Select variant
+        document.querySelectorAll('#copyResults .note-preview').forEach(function(el) {
+          el.addEventListener('click', function() {
+            var idx = parseInt(this.dataset.vidx);
+            currentCopy = currentVariants[idx];
+            document.querySelectorAll('#copyResults .note-preview').forEach(function(e) {
+              e.style.border = '1px solid var(--border-light)';
+            });
+            this.style.border = '2px solid var(--accent)';
+          });
+        });
+        // Auto-select first
+        var first = document.querySelector('#copyResults .note-preview');
+        if (first) first.style.border = '2px solid var(--accent)';
+      }
+
+      btnRegenerate.addEventListener('click', function() { btnGenCopy.click(); });
+
+      // ─── Preview ───
+      btnToPreview.addEventListener('click', function() {
+        if (!currentCopy) { alert('请先生成文案'); return; }
+        fillPreview(currentCopy);
+        goStep(3);
+      });
+
+      function fillPreview(copy) {
+        document.getElementById('finalTitle').value = copy.title;
+        document.getElementById('finalBody').value = copy.body;
+        document.getElementById('finalTags').value = copy.tags;
+        updateNotePreview();
+        updateNoteImages();
+      }
+
+      function updateNotePreview() {
+        document.getElementById('noteTitle').textContent = document.getElementById('finalTitle').value || '(标题)';
+        document.getElementById('noteBody').textContent = document.getElementById('finalBody').value || '(正文)';
+        document.getElementById('noteTags').innerHTML = (document.getElementById('finalTags').value || '')
+          .split(/\s+/).filter(Boolean).map(function(t) {
+            return '<span class="note-tag">' + t + '</span>';
+          }).join('');
+      }
+
+      function updateNoteImages() {
+        document.getElementById('noteImages').innerHTML = uploadedFiles.map(function(f) {
+          return '<img src="' + f.url + '" alt="" />';
+        }).join('');
+      }
+
+      document.getElementById('finalTitle').addEventListener('input', updateNotePreview);
+      document.getElementById('finalBody').addEventListener('input', updateNotePreview);
+      document.getElementById('finalTags').addEventListener('input', updateNotePreview);
+
+      // ─── Publish ───
+      btnPublish.addEventListener('click', function() {
+        var title = document.getElementById('finalTitle').value.trim();
+        var body = document.getElementById('finalBody').value.trim();
+        var tags = document.getElementById('finalTags').value.trim();
+
+        if (!title || !body) { alert('标题和正文不能为空'); return; }
+
+        btnPublish.disabled = true;
+        btnPublish.textContent = '⏳ 发布中...';
+
+        fetch('/api/xhs/publish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: title, body: body, tags: tags,
+            images: uploadedFiles.map(function(f) { return f.url; }),
+            api_key: apiKey
+          })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          btnPublish.disabled = false;
+          btnPublish.textContent = '🚀 一键发布到小红书';
+          if (d.ok) {
+            document.getElementById('doneMsg').textContent = d.record.note;
+            goStep(4);
+            loadHistory();
+          } else {
+            alert('发布失败: ' + (d.error || '未知错误'));
+          }
+        })
+        .catch(function(e) {
+          btnPublish.disabled = false;
+          btnPublish.textContent = '🚀 一键发布到小红书';
+          alert('请求失败: ' + e.message);
+        });
+      });
+
+      // ─── New Post ───
+      btnNewPost.addEventListener('click', function() {
+        uploadedFiles = []; currentCopy = null; currentVariants = null;
+        previewGrid.innerHTML = ''; productDesc.value = '';
+        document.getElementById('finalTitle').value = '';
+        document.getElementById('finalBody').value = '';
+        document.getElementById('finalTags').value = '';
+        document.getElementById('copyResults').innerHTML = '';
+        document.getElementById('noteImages').innerHTML = '';
+        goStep(1);
+      });
+      btnViewHistory.addEventListener('click', function() {
+        historySection.scrollIntoView({ behavior: 'smooth' });
+      });
+
+      // ─── History ───
+      function loadHistory() {
+        fetch('/api/xhs/history')
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (!d.history || d.history.length === 0) {
+              historyList.innerHTML = '<p style="color:var(--text-tertiary);font-size:14px;">暂无发布记录</p>';
+              return;
+            }
+            historyList.innerHTML = '<table class="history-table"><thead><tr>' +
+              '<th>标题</th><th>标签</th><th>时间</th><th>状态</th></tr></thead><tbody>' +
+              d.history.map(function(h) {
+                return '<tr>' +
+                  '<td><strong>' + h.title + '</strong></td>' +
+                  '<td>' + (h.tags||[]).map(function(t){return '<span class="note-tag" style="font-size:11px;">'+t+'</span>';}).join(' ') + '</td>' +
+                  '<td>' + new Date(h.createdAt).toLocaleString('zh-CN') + '</td>' +
+                  '<td><span class="badge ' + (h.status==='ready'?'badge-ok':'badge-info') + '">' + (h.status==='ready'?'待发布':'已记录') + '</span></td>' +
+                  '</tr>';
+              }).join('') +
+              '</tbody></table>';
+          });
+      }
+      loadHistory();
+    })();
+  </script>
+</body>
+</html>
