@@ -4,8 +4,8 @@
   "description": "灵犀导购 - AI电商智能购物助手",
   "type": "module",
   "scripts": {
-    "dev": "node server.js",
-    "start": "node server.js"
+    "dev": "node main.js",
+    "start": "node main.js"
   },
   "dependencies": {
     "coze-coding-dev-sdk": "latest",
