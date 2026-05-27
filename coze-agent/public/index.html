@@ -189,10 +189,8 @@
     @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     @keyframes spin { to{transform:rotate(360deg)} }
 
-    @media (max-width:768px) {
-      .cards-grid { grid-template-columns:1fr; }
-      .page { padding:20px 16px 40px; }
-    }
+    @media (max-width:1024px) { .cards-grid { grid-template-columns:repeat(2, 1fr); } }
+    @media (max-width:640px) { .cards-grid { grid-template-columns:1fr; } .page { padding:20px 14px 40px; } }
   </style>
 </head>
 <body>
@@ -219,19 +217,25 @@
       <p>AI驱动的市场监测、竞品分析与每日总结，让数据告诉你今天该做什么</p>
     </div>
 
-    <!-- Three Feature Cards -->
-    <div class="cards-grid">
-      <div class="card" data-panel="hotTopics">
-        <div class="card-icon">🔥</div>
-        <h3>市场热点</h3>
-        <p>实时追踪消费趋势，发现热门品类和热搜关键词</p>
-        <span class="card-badge badge-accent">实时搜索</span>
+    <!-- Feature Cards -->
+    <div class="cards-grid" style="grid-template-columns:repeat(4, 1fr);">
+      <div class="card" data-panel="trends">
+        <div class="card-icon">📈</div>
+        <h3>市场趋势</h3>
+        <p>一键获取当前热销品类、分平台爆款趋势</p>
+        <span class="card-badge badge-accent">实时数据</span>
+      </div>
+      <div class="card" data-panel="policyNews">
+        <div class="card-icon">🔍</div>
+        <h3>政策新闻</h3>
+        <p>搜索关键词相关的政府政策、法规和行业动态</p>
+        <span class="card-badge badge-red">权威来源</span>
       </div>
       <div class="card" data-panel="competitors">
         <div class="card-icon">👥</div>
         <h3>竞品分析</h3>
         <p>监测竞争对手的定价策略、营销打法和产品布局</p>
-        <span class="card-badge badge-red">情报收集</span>
+        <span class="card-badge badge-purple">情报收集</span>
       </div>
       <div class="card" data-panel="dailyReport">
         <div class="card-icon">📋</div>
@@ -242,35 +246,36 @@
     </div>
 
     <!-- Result Panels -->
-    <div class="result-panel" id="panelHotTopics">
+    <div class="result-panel" id="panelTrends">
       <div class="result-header">
-        <h2>🔥 市场热点</h2>
+        <h2>📈 市场热销趋势</h2>
         <button class="result-close">&times;</button>
       </div>
       <div class="result-body">
-
-        <!-- 一键趋势 -->
-        <div style="background:var(--accent-light);border-radius:var(--radius-xs);padding:18px 20px;margin-bottom:24px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-              <h4 style="font-size:15px;font-weight:600;margin-bottom:2px;">📈 一键获取市场热销趋势</h4>
-              <p style="font-size:12px;color:var(--text-secondary);">帮你看看现在市面上什么品类卖得最好</p>
-            </div>
-            <button class="btn btn-primary" id="btnTrends" style="background:var(--accent);">获取趋势</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <h4 style="font-size:15px;font-weight:600;margin-bottom:2px;">一键获取当前市场热销情报</h4>
+            <p style="font-size:12px;color:var(--text-secondary);">看看现在市面上什么品类卖得最好，数据分平台呈现</p>
           </div>
-          <div id="trendsResult" style="margin-top:14px;"></div>
+          <button class="btn btn-primary" id="btnTrends">获取趋势</button>
         </div>
+        <div id="trendsResult" style="margin-top:16px;"></div>
+      </div>
+    </div>
 
-        <!-- 政策新闻搜索 -->
-        <div>
-          <h4 style="font-size:15px;font-weight:600;margin-bottom:6px;">🔍 政策 & 新闻搜索</h4>
-          <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">搜索与关键词相关的政府政策、法规和行业新闻</p>
-          <div class="input-row">
-            <input class="input-field" id="policyKeyword" placeholder="输入关键词，如：跨境电商、直播带货、AI..." />
-            <button class="btn btn-primary" id="btnPolicyNews">搜索</button>
-          </div>
-          <div id="policyResult" style="margin-top:14px;"></div>
+    <div class="result-panel" id="panelPolicyNews">
+      <div class="result-header">
+        <h2>🔍 政策 & 新闻搜索</h2>
+        <button class="result-close">&times;</button>
+      </div>
+      <div class="result-body">
+        <h4 style="font-size:15px;font-weight:600;margin-bottom:6px;">搜索政策法规与行业新闻</h4>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">输入关键词，整理相关的政府政策、法规和行业动态</p>
+        <div class="input-row">
+          <input class="input-field" id="policyKeyword" placeholder="输入关键词，如：跨境电商、直播带货、AI..." />
+          <button class="btn btn-primary" id="btnPolicyNews">搜索</button>
         </div>
+        <div id="policyResult" style="margin-top:16px;"></div>
       </div>
     </div>
 
@@ -380,7 +385,7 @@
       document.addEventListener('keydown', function(e) { if (e.key==='Escape' && !settingsOverlay.classList.contains('hidden')) settingsOverlay.classList.add('hidden'); });
 
       // ─── Panel Toggle ───
-      var panels = { hotTopics: 'panelHotTopics', competitors: 'panelCompetitors', dailyReport: 'panelDailyReport' };
+      var panels = { trends: 'panelTrends', policyNews: 'panelPolicyNews', competitors: 'panelCompetitors', dailyReport: 'panelDailyReport' };
 
       document.querySelectorAll('.card').forEach(function(card) {
         card.addEventListener('click', function() {
