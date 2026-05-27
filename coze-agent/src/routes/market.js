@@ -1,15 +1,29 @@
 import { Router } from "express";
-import { getHotTopics } from "../market/hotTopics.js";
+import { getMarketTrends, searchPolicyNews } from "../market/hotTopics.js";
 import { analyzeCompetitors } from "../market/competitor.js";
 import { generateDailyReport } from "../market/dailyReport.js";
 
 const router = Router();
 
-// 市场热点
-router.post("/market/hot-topics", async (req, res) => {
-  const { api_key, category } = req.body;
+// 一键获取市场热销趋势
+router.post("/market/trends", async (req, res) => {
+  const { api_key } = req.body;
   try {
-    const result = await getHotTopics(api_key || "", category || "");
+    const result = await getMarketTrends(api_key || "");
+    res.json({ ok: true, ...result });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// 关键词搜索政策与新闻
+router.post("/market/policy-news", async (req, res) => {
+  const { api_key, keyword } = req.body;
+  if (!keyword) {
+    return res.status(400).json({ ok: false, error: "请输入搜索关键词" });
+  }
+  try {
+    const result = await searchPolicyNews(keyword, api_key || "");
     res.json({ ok: true, ...result });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
