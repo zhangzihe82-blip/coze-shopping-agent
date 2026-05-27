@@ -16,6 +16,9 @@ desktop.ini
 *.tmp
 *.log
 
+# Node
+node_modules/
+
 # Generated PDF images (keep source only)
 *.png
 *.jpg
