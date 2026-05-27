@@ -1,0 +1,167 @@
+{
+  "workflow_id": "",
+  "name": "商品对比分析",
+  "description": "对2-5个商品进行多维度对比分析，生成结构化对比表格和购买建议",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {
+      "node_id": "start",
+      "type": "Start",
+      "name": "对比请求输入",
+      "position": {"x": 300, "y": 50},
+      "input_params": [
+        {
+          "name": "products",
+          "type": "array",
+          "description": "待对比商品列表 [{\"name\": \"\", \"category\": \"\"}]",
+          "required": true
+        },
+        {
+          "name": "user_priorities",
+          "type": "array",
+          "description": "用户关注维度（如：性价比、外观、性能、售后等）",
+          "required": false
+        },
+        {
+          "name": "budget_range",
+          "type": "object",
+          "description": "预算范围",
+          "required": false
+        }
+      ],
+      "output_params": [
+        {"name": "products", "type": "array"},
+        {"name": "user_priorities", "type": "array"},
+        {"name": "budget_range", "type": "object"}
+      ]
+    },
+    {
+      "node_id": "product_info_collector",
+      "type": "HTTP",
+      "name": "商品信息采集",
+      "position": {"x": 150, "y": 200},
+      "plugin": "web_search",
+      "description": "对每个商品进行联网搜索，获取最新规格参数和价格",
+      "search_template": "{{product.name}} 详细参数 规格 价格 2025 评测",
+      "per_product": true,
+      "max_results_per_product": 3,
+      "input_params": [
+        {"name": "products", "type": "array", "source": "start.products"}
+      ],
+      "output_params": [
+        {"name": "product_details", "type": "array", "description": "每个商品的详细参数信息"}
+      ]
+    },
+    {
+      "node_id": "knowledge_enricher",
+      "type": "Knowledge",
+      "name": "知识库增强",
+      "position": {"x": 450, "y": 200},
+      "knowledge_bases": ["商品品类指南", "品牌数据库"],
+      "query_template": "{{products[0].category}} 选购指南 参数对比 品牌差异",
+      "top_k": 3,
+      "input_params": [
+        {"name": "products", "type": "array", "source": "start.products"}
+      ],
+      "output_params": [
+        {"name": "category_knowledge", "type": "array"}
+      ]
+    },
+    {
+      "node_id": "dimension_extractor",
+      "type": "LLM",
+      "name": "对比维度提取",
+      "position": {"x": 300, "y": 350},
+      "model": "doubao-pro-32k",
+      "temperature": 0.3,
+      "prompt_template": "根据商品品类和用户关注点，确定对比维度。\n\n商品品类：{{products[0].category}}\n用户关注维度：{{user_priorities}}\n品类知识：{{category_knowledge}}\n\n请确定8-10个最适合此类商品的对比维度，按重要性排序。\n维度示例：价格、性能、外观、续航、拍照、屏幕、售后、品牌口碑、性价比、适用场景等。\n\n输出JSON数组：[\"维度1\", \"维度2\", ...]",
+      "input_params": [
+        {"name": "products", "type": "array", "source": "start.products"},
+        {"name": "user_priorities", "type": "array", "source": "start.user_priorities"},
+        {"name": "category_knowledge", "type": "array", "source": "knowledge_enricher.category_knowledge"}
+      ],
+      "output_params": [
+        {"name": "dimensions", "type": "array"}
+      ]
+    },
+    {
+      "node_id": "comparison_engine",
+      "type": "LLM",
+      "name": "对比分析引擎",
+      "position": {"x": 300, "y": 510},
+      "model": "doubao-pro-128k",
+      "temperature": 0.5,
+      "max_tokens": 4096,
+      "prompt_template": "你是一个专业商品对比分析师。对以下商品进行多维度对比。\n\n## 待对比商品\n{{product_details}}\n\n## 对比维度\n{{dimensions}}\n\n## 用户预算\n{{budget_range}}\n\n## 要求\n1. 对每个维度进行逐项对比，用表格呈现\n2. 每个维度标注优胜者\n3. 总结各商品的适用场景和人群\n4. 给出明确的购买建议：\n   - 追求性价比 → 选XX\n   - 追求品质 → 选XX\n   - 均衡之选 → 选XX\n\n## 输出格式\n先用一个简洁的对比表格（Markdown表格），然后分段展开说明关键差异，最后给出场景化购买建议。",
+      "input_params": [
+        {"name": "products", "type": "array", "source": "start.products"},
+        {"name": "product_details", "type": "array", "source": "product_info_collector.product_details"},
+        {"name": "dimensions", "type": "array", "source": "dimension_extractor.dimensions"},
+        {"name": "budget_range", "type": "object", "source": "start.budget_range"}
+      ],
+      "output_params": [
+        {"name": "comparison_result", "type": "string"},
+        {"name": "winner_per_dimension", "type": "object"},
+        {"name": "final_recommendation", "type": "string"}
+      ]
+    },
+    {
+      "node_id": "score_calculator",
+      "type": "Code",
+      "name": "综合评分计算",
+      "position": {"x": 300, "y": 670},
+      "language": "python",
+      "code": "import json\n\n# 对每个商品计算加权综合得分\ndimensions = {{dimensions}}\nuser_priorities = {{user_priorities}} if {{user_priorities}} else dimensions[:5]\ncomparison_data = {{comparison_engine.comparison_result}}\n\n# 按用户关注度给维度加权\nweights = {}\npriority_weight = 2.0  # 用户关注的维度权重加倍\nfor dim in dimensions:\n    weights[dim] = 2.0 if dim in user_priorities else 1.0\n\n# 输出权重分配和评分计算逻辑\noutput = {\n    'weights': weights,\n    'priority_dimensions': user_priorities,\n    'total_dimensions': len(dimensions),\n    'scoring_method': '用户关注维度权重x2，其余维度权重x1',\n    'note': '最终评分由对比引擎综合给出，此节点提供权重参考'\n}\nprint(json.dumps(output, ensure_ascii=False))",
+      "input_params": [
+        {"name": "dimensions", "type": "array", "source": "dimension_extractor.dimensions"},
+        {"name": "user_priorities", "type": "array", "source": "start.user_priorities"},
+        {"name": "comparison_data", "type": "string", "source": "comparison_engine.comparison_result"}
+      ],
+      "output_params": [
+        {"name": "score_analysis", "type": "object"}
+      ]
+    },
+    {
+      "node_id": "output_formatter",
+      "type": "LLM",
+      "name": "输出格式化",
+      "position": {"x": 300, "y": 820},
+      "model": "doubao-pro-32k",
+      "temperature": 0.5,
+      "prompt_template": "将对比分析结果格式化为最终用户输出。\n\n对比结果：{{comparison_engine.comparison_result}}\n评分权重：{{score_calculator.score_analysis}}\n\n格式要求：\n1. 使用emoji增强可读性（📊对比、🏆优胜、💰价格、⭐推荐等）\n2. 对比表格清晰易读\n3. 关键差异用**加粗**标注\n4. 最后给出清晰的购买建议总结\n5. 添加一句帮助性话语\n\n最终输出：",
+      "input_params": [
+        {"name": "comparison_result", "type": "string", "source": "comparison_engine.comparison_result"},
+        {"name": "score_analysis", "type": "object", "source": "score_calculator.score_analysis"}
+      ],
+      "output_params": [
+        {"name": "formatted_output", "type": "string"}
+      ]
+    },
+    {
+      "node_id": "end",
+      "type": "End",
+      "name": "输出对比结果",
+      "position": {"x": 300, "y": 970},
+      "output_params": [
+        {"name": "final_response", "type": "string", "source": "output_formatter.formatted_output"},
+        {"name": "comparison_table", "type": "string", "source": "comparison_engine.comparison_result"},
+        {"name": "winner", "type": "object", "source": "comparison_engine.winner_per_dimension"},
+        {"name": "recommendation", "type": "string", "source": "comparison_engine.final_recommendation"}
+      ]
+    }
+  ],
+  "edges": [
+    {"source": "start", "target": "product_info_collector", "source_handle": "output", "target_handle": "input"},
+    {"source": "start", "target": "knowledge_enricher", "source_handle": "output", "target_handle": "input"},
+    {"source": "product_info_collector", "target": "comparison_engine", "source_handle": "output", "target_handle": "input"},
+    {"source": "knowledge_enricher", "target": "dimension_extractor", "source_handle": "output", "target_handle": "input"},
+    {"source": "dimension_extractor", "target": "comparison_engine", "source_handle": "output", "target_handle": "input"},
+    {"source": "comparison_engine", "target": "score_calculator", "source_handle": "output", "target_handle": "input"},
+    {"source": "score_calculator", "target": "output_formatter", "source_handle": "output", "target_handle": "input"},
+    {"source": "output_formatter", "target": "end", "source_handle": "output", "target_handle": "input"}
+  ],
+  "variables": [
+    {"name": "compare_count", "type": "number", "default": 0, "description": "对比次数统计"}
+  ]
+}

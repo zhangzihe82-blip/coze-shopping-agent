@@ -1,0 +1,219 @@
+{
+  "workflow_id": "",
+  "name": "导购主流程",
+  "description": "AI购物助手的核心工作流：接收用户购物需求 → 多轮意图挖掘 → 知识库检索 → 生成个性化推荐 → 输出结构化建议",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {
+      "node_id": "start",
+      "type": "Start",
+      "name": "用户需求输入",
+      "position": {"x": 250, "y": 50},
+      "input_params": [
+        {
+          "name": "user_query",
+          "type": "string",
+          "description": "用户原始购物需求描述",
+          "required": true
+        },
+        {
+          "name": "user_profile",
+          "type": "object",
+          "description": "用户画像（可选）：年龄、性别、历史偏好、预算范围",
+          "required": false
+        },
+        {
+          "name": "conversation_history",
+          "type": "array",
+          "description": "对话历史记录",
+          "required": false
+        }
+      ],
+      "output_params": [
+        {"name": "user_query", "type": "string"},
+        {"name": "user_profile", "type": "object"},
+        {"name": "conversation_history", "type": "array"}
+      ]
+    },
+    {
+      "node_id": "intent_analyzer",
+      "type": "LLM",
+      "name": "意图识别与需求提取",
+      "position": {"x": 250, "y": 180},
+      "model": "doubao-pro-32k",
+      "temperature": 0.3,
+      "prompt_template": "你是一个电商意图分析器。分析用户输入，提取关键购物信息。\n\n用户输入：{{user_query}}\n\n请以JSON格式提取以下信息：\n{\n  \"intent_type\": \"推荐/对比/评价查询/比价/模糊闲聊\",\n  \"category\": \"产品大类（3C数码/美妆护肤/服装鞋包/家居生活/食品饮料/其他）\",\n  \"sub_category\": \"具体小类\",\n  \"budget_range\": {\"min\": 预算下限, \"max\": 预算上限},\n  \"scenario\": \"使用场景\",\n  \"key_requirements\": [\"需求1\", \"需求2\"],\n  \"constraints\": [\"限制条件\"],\n  \"user_expertise\": \"新手/一般/专家\",\n  \"urgency\": \"急需/一般/观望\",\n  \"missing_info\": [\"还需要确认的信息1\", \"信息2\"]\n}\n\n如果信息不完整，在missing_info中列出需要追问的关键点。",
+      "input_params": [
+        {"name": "user_query", "type": "string", "source": "start.user_query"}
+      ],
+      "output_params": [
+        {"name": "intent_analysis", "type": "object"},
+        {"name": "intent_type", "type": "string"},
+        {"name": "missing_info", "type": "array"}
+      ]
+    },
+    {
+      "node_id": "need_clarification",
+      "type": "Condition",
+      "name": "是否需要追问",
+      "position": {"x": 250, "y": 330},
+      "condition_expression": "{{intent_analyzer.missing_info.length}} > 0 AND {{intent_analyzer.intent_type}} != '模糊闲聊'",
+      "true_branch": "clarification_generator",
+      "false_branch": "knowledge_retriever"
+    },
+    {
+      "node_id": "clarification_generator",
+      "type": "LLM",
+      "name": "追问生成器",
+      "position": {"x": 100, "y": 460},
+      "model": "doubao-pro-32k",
+      "temperature": 0.7,
+      "prompt_template": "你是一个友好的购物顾问，需要礼貌地追问用户以获取更准确的购物需求。\n\n用户说了：{{user_query}}\n\n还需要确认的信息：{{intent_analyzer.missing_info}}\n\n请生成1-2句自然的追问，注意：\n1. 不要像问卷调查，要像朋友聊天\n2. 一次最多问2个关键问题\n3. 给出选项让用户更容易回答（如\"大概是什么价位呢？500以内还是1000-2000？\"）\n4. 先肯定用户的表达，再追问\n\n追问话术：",
+      "input_params": [
+        {"name": "user_query", "type": "string", "source": "start.user_query"},
+        {"name": "missing_info", "type": "array", "source": "intent_analyzer.missing_info"}
+      ],
+      "output_params": [
+        {"name": "clarification_text", "type": "string"}
+      ]
+    },
+    {
+      "node_id": "knowledge_retriever",
+      "type": "Knowledge",
+      "name": "知识库检索",
+      "position": {"x": 500, "y": 460},
+      "knowledge_bases": ["商品品类指南", "购物避坑指南", "品牌数据库"],
+      "query_template": "{{intent_analyzer.category}} {{intent_analyzer.sub_category}} 选购指南 品牌推荐 参数对比 性价比",
+      "top_k": 5,
+      "score_threshold": 0.6,
+      "input_params": [
+        {"name": "category", "type": "string", "source": "intent_analyzer.category"},
+        {"name": "sub_category", "type": "string", "source": "intent_analyzer.sub_category"},
+        {"name": "key_requirements", "type": "array", "source": "intent_analyzer.key_requirements"}
+      ],
+      "output_params": [
+        {"name": "knowledge_results", "type": "array"},
+        {"name": "result_count", "type": "number"}
+      ]
+    },
+    {
+      "node_id": "web_searcher",
+      "type": "HTTP",
+      "name": "联网搜索最新信息",
+      "position": {"x": 750, "y": 460},
+      "plugin": "web_search",
+      "search_query": "{{intent_analyzer.category}} {{intent_analyzer.sub_category}} 推荐 2025 2026 评测 价格",
+      "max_results": 5,
+      "input_params": [
+        {"name": "category", "type": "string", "source": "intent_analyzer.category"},
+        {"name": "sub_category", "type": "string", "source": "intent_analyzer.sub_category"},
+        {"name": "budget_range", "type": "object", "source": "intent_analyzer.budget_range"}
+      ],
+      "output_params": [
+        {"name": "search_results", "type": "array"},
+        {"name": "search_success", "type": "boolean"}
+      ]
+    },
+    {
+      "node_id": "recommendation_engine",
+      "type": "LLM",
+      "name": "推荐引擎 - SPADE框架",
+      "position": {"x": 500, "y": 610},
+      "model": "doubao-pro-128k",
+      "temperature": 0.8,
+      "max_tokens": 4096,
+      "prompt_template": "你是一个资深电商导购专家。根据以下信息，为用户生成个性化商品推荐。\n\n## 用户需求\n- 意图类型：{{intent_analyzer.intent_type}}\n- 品类：{{intent_analyzer.category}} > {{intent_analyzer.sub_category}}\n- 预算：{{intent_analyzer.budget_range.min}} - {{intent_analyzer.budget_range.max}}元\n- 场景：{{intent_analyzer.scenario}}\n- 核心需求：{{intent_analyzer.key_requirements}}\n- 限制条件：{{intent_analyzer.constraints}}\n- 专业程度：{{intent_analyzer.user_expertise}}\n\n## 知识库参考\n{{knowledge_retriever.knowledge_results}}\n\n## 实时搜索参考\n{{web_searcher.search_results}}\n\n## 推荐要求\n严格遵循 SPADE 框架生成推荐：\n\n**S - Situation（场景定位）**\n说明推荐产品最适合的使用场景和人群画像\n\n**P - Pros（核心优势）**\n每个推荐产品列出3个核心卖点，用通俗语言解释为什么重要\n\n**A - Alternatives（替代方案）**\n推荐2-3个产品，覆盖不同价位/定位：\n- 性价比之选（预算友好）\n- 主流之选（最推荐）\n- 旗舰之选（预算充足时）\n\n**D - Drawbacks（注意事项）**\n每个产品坦率指出1-2个不足或需要注意的地方\n\n**E - Explanation（购买指南）**\n用场景化语言总结：什么情况下选A，什么情况下选B\n\n## 输出格式\n用自然友好的语气输出，像朋友在给建议。每个产品用简洁的结构呈现，避免信息过载。最后给出一个明确的购买建议总结。",
+      "input_params": [
+        {"name": "intent_type", "type": "string", "source": "intent_analyzer.intent_type"},
+        {"name": "category", "type": "string", "source": "intent_analyzer.category"},
+        {"name": "sub_category", "type": "string", "source": "intent_analyzer.sub_category"},
+        {"name": "budget_range", "type": "object", "source": "intent_analyzer.budget_range"},
+        {"name": "scenario", "type": "string", "source": "intent_analyzer.scenario"},
+        {"name": "key_requirements", "type": "array", "source": "intent_analyzer.key_requirements"},
+        {"name": "constraints", "type": "array", "source": "intent_analyzer.constraints"},
+        {"name": "user_expertise", "type": "string", "source": "intent_analyzer.user_expertise"},
+        {"name": "knowledge_results", "type": "array", "source": "knowledge_retriever.knowledge_results"},
+        {"name": "search_results", "type": "array", "source": "web_searcher.search_results"}
+      ],
+      "output_params": [
+        {"name": "recommendation_text", "type": "string"},
+        {"name": "product_list", "type": "array"},
+        {"name": "search_keywords", "type": "array"}
+      ]
+    },
+    {
+      "node_id": "quality_checker",
+      "type": "LLM",
+      "name": "质量校验",
+      "position": {"x": 500, "y": 770},
+      "model": "doubao-pro-32k",
+      "temperature": 0.2,
+      "prompt_template": "你是一个质量检查员。检查以下推荐内容是否符合SPADE框架标准。\n\n推荐内容：\n{{recommendation_engine.recommendation_text}}\n\n检查清单：\n1. ✅ 是否包含场景定位（Situation）？\n2. ✅ 每个产品是否列出了核心优势（Pros）？\n3. ✅ 是否提供了不同价位的替代方案（Alternatives）？\n4. ✅ 是否指出了注意事项（Drawbacks）？\n5. ✅ 是否有明确的购买建议总结（Explanation）？\n6. ✅ 语言是否友好自然？\n7. ✅ 推荐是否在用户预算范围内？\n\n如果有任何项不通过，请标记failed_items并给出修改建议。\n输出JSON：{\"passed\": true/false, \"failed_items\": [], \"suggestions\": \"\"}",
+      "input_params": [
+        {"name": "recommendation_text", "type": "string", "source": "recommendation_engine.recommendation_text"}
+      ],
+      "output_params": [
+        {"name": "qc_result", "type": "object"},
+        {"name": "passed", "type": "boolean"}
+      ]
+    },
+    {
+      "node_id": "qc_branch",
+      "type": "Condition",
+      "name": "质量是否通过",
+      "position": {"x": 500, "y": 900},
+      "condition_expression": "{{quality_checker.passed}} == true",
+      "true_branch": "output_formatter",
+      "false_branch": "recommendation_engine"
+    },
+    {
+      "node_id": "output_formatter",
+      "type": "LLM",
+      "name": "输出格式化",
+      "position": {"x": 500, "y": 1030},
+      "model": "doubao-pro-32k",
+      "temperature": 0.5,
+      "prompt_template": "将以下推荐内容格式化为最终输出。\n\n推荐内容：{{recommendation_engine.recommendation_text}}\n\n格式要求：\n1. 使用markdown格式增强可读性\n2. 用emoji标记不同部分（💡场景、✨优势、🔄替代、⚠️注意、🎯建议）\n3. 在末尾添加2-3个搜索关键词，方便用户自己查找\n4. 添加一句鼓励性的话语\n5. 如果合适，问一个引导性问题促进继续对话\n\n最终输出：",
+      "input_params": [
+        {"name": "recommendation_text", "type": "string", "source": "recommendation_engine.recommendation_text"}
+      ],
+      "output_params": [
+        {"name": "formatted_output", "type": "string"},
+        {"name": "search_keywords", "type": "array"}
+      ]
+    },
+    {
+      "node_id": "end",
+      "type": "End",
+      "name": "输出结果",
+      "position": {"x": 500, "y": 1180},
+      "output_params": [
+        {"name": "final_response", "type": "string", "source": "output_formatter.formatted_output"},
+        {"name": "intent_analysis", "type": "object", "source": "intent_analyzer.intent_analysis"},
+        {"name": "products", "type": "array", "source": "recommendation_engine.product_list"},
+        {"name": "search_keywords", "type": "array", "source": "output_formatter.search_keywords"}
+      ]
+    }
+  ],
+  "edges": [
+    {"source": "start", "target": "intent_analyzer", "source_handle": "output", "target_handle": "input"},
+    {"source": "intent_analyzer", "target": "need_clarification", "source_handle": "output", "target_handle": "input"},
+    {"source": "need_clarification", "target": "clarification_generator", "source_handle": "true", "target_handle": "input"},
+    {"source": "need_clarification", "target": "knowledge_retriever", "source_handle": "false", "target_handle": "input"},
+    {"source": "need_clarification", "target": "web_searcher", "source_handle": "false", "target_handle": "input"},
+    {"source": "clarification_generator", "target": "end", "source_handle": "output", "target_handle": "input"},
+    {"source": "knowledge_retriever", "target": "recommendation_engine", "source_handle": "output", "target_handle": "input"},
+    {"source": "web_searcher", "target": "recommendation_engine", "source_handle": "output", "target_handle": "input"},
+    {"source": "recommendation_engine", "target": "quality_checker", "source_handle": "output", "target_handle": "input"},
+    {"source": "quality_checker", "target": "qc_branch", "source_handle": "output", "target_handle": "input"},
+    {"source": "qc_branch", "target": "output_formatter", "source_handle": "true", "target_handle": "input"},
+    {"source": "qc_branch", "target": "recommendation_engine", "source_handle": "false", "target_handle": "input"},
+    {"source": "output_formatter", "target": "end", "source_handle": "output", "target_handle": "input"}
+  ],
+  "variables": [
+    {"name": "conversation_round", "type": "number", "default": 0, "description": "当前对话轮次"},
+    {"name": "user_satisfaction", "type": "number", "default": 0, "description": "用户满意度追踪"},
+    {"name": "recommendation_count", "type": "number", "default": 0, "description": "已推荐次数"}
+  ]
+}

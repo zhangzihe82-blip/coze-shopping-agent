@@ -1,0 +1,117 @@
+{
+  "workflow_id": "",
+  "name": "评价聚合分析",
+  "description": "聚合商品用户评价，进行情感分析和关键信息提取，帮助用户快速了解产品真实口碑",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {
+      "node_id": "start",
+      "type": "Start",
+      "name": "评价查询请求",
+      "position": {"x": 300, "y": 50},
+      "input_params": [
+        {
+          "name": "product_name",
+          "type": "string",
+          "description": "要查询的商品名称",
+          "required": true
+        },
+        {
+          "name": "platform",
+          "type": "string",
+          "description": "评价来源平台（淘宝/京东/拼多多/综合）",
+          "required": false,
+          "default": "综合"
+        },
+        {
+          "name": "aspects",
+          "type": "array",
+          "description": "用户关心的方面（如：质量、物流、售后等）",
+          "required": false
+        }
+      ],
+      "output_params": [
+        {"name": "product_name", "type": "string"},
+        {"name": "platform", "type": "string"},
+        {"name": "aspects", "type": "array"}
+      ]
+    },
+    {
+      "node_id": "review_collector",
+      "type": "HTTP",
+      "name": "评价数据采集",
+      "position": {"x": 300, "y": 200},
+      "plugin": "web_search",
+      "search_query": "{{product_name}} 用户评价 口碑 优缺点 2025",
+      "max_results": 8,
+      "input_params": [
+        {"name": "product_name", "type": "string", "source": "start.product_name"}
+      ],
+      "output_params": [
+        {"name": "review_data", "type": "array"},
+        {"name": "data_quality", "type": "string"}
+      ]
+    },
+    {
+      "node_id": "sentiment_analyzer",
+      "type": "LLM",
+      "name": "情感与观点分析",
+      "position": {"x": 300, "y": 360},
+      "model": "doubao-pro-128k",
+      "temperature": 0.3,
+      "prompt_template": "你是一个商品评价分析师。分析以下用户评价数据，提取关键信息。\n\n## 评价数据\n{{review_data}}\n\n## 分析要求\n\n### 1. 整体情感分布\n- 正面评价占比\n- 负面评价占比  \n- 中性评价占比\n- 整体评分预估（1-5星）\n\n### 2. 好评关键词TOP5\n提取用户最常提到的正面词汇和对应的场景\n\n### 3. 差评关键词TOP5\n提取用户最常抱怨的问题，区分是产品问题还是服务问题\n\n### 4. 分维度分析\n对以下维度逐一分析用户反馈：\n- 产品质量\n- 性价比\n- 使用体验\n- 物流包装\n- 售后服务\n- {{aspects}}\n\n### 5. 典型用户画像\n根据评价内容，描述该产品的典型满意用户和典型不满意用户\n\n### 6. 购买建议\n综合以上分析，给出：\n- 什么情况下值得买\n- 什么情况下建议pass\n- 购买时需要注意什么\n\n输出格式：使用markdown结构，清晰分段，用emoji增强可读性。",
+      "input_params": [
+        {"name": "product_name", "type": "string", "source": "start.product_name"},
+        {"name": "review_data", "type": "array", "source": "review_collector.review_data"},
+        {"name": "aspects", "type": "array", "source": "start.aspects"}
+      ],
+      "output_params": [
+        {"name": "sentiment_analysis", "type": "string"},
+        {"name": "sentiment_score", "type": "number"},
+        {"name": "top_pros", "type": "array"},
+        {"name": "top_cons", "type": "array"},
+        {"name": "buy_recommendation", "type": "string"}
+      ]
+    },
+    {
+      "node_id": "credibility_checker",
+      "type": "LLM",
+      "name": "评价可信度校验",
+      "position": {"x": 300, "y": 530},
+      "model": "doubao-pro-32k",
+      "temperature": 0.2,
+      "prompt_template": "校验评价分析的可信度。\n\n评价数据量：{{review_collector.data_quality}}\n分析结果：{{sentiment_analyzer.sentiment_analysis}}\n\n检查项：\n1. 是否有足够的数据支撑结论？\n2. 是否存在明显的刷好评/恶意差评迹象？\n3. 正面和负面评价是否平衡？\n4. 结论是否有数据依据？\n\n输出JSON：{\n  \"credible\": true/false,\n  \"confidence_level\": \"高/中/低\",\n  \"warnings\": [\"需要注意的点\"],\n  \"data_limitation\": \"数据局限性说明\"\n}",
+      "input_params": [
+        {"name": "data_quality", "type": "string", "source": "review_collector.data_quality"},
+        {"name": "sentiment_analysis", "type": "string", "source": "sentiment_analyzer.sentiment_analysis"}
+      ],
+      "output_params": [
+        {"name": "credibility_result", "type": "object"}
+      ]
+    },
+    {
+      "node_id": "end",
+      "type": "End",
+      "name": "输出评价分析报告",
+      "position": {"x": 300, "y": 680},
+      "output_params": [
+        {"name": "final_response", "type": "string", "source": "sentiment_analyzer.sentiment_analysis"},
+        {"name": "sentiment_score", "type": "number", "source": "sentiment_analyzer.sentiment_score"},
+        {"name": "pros", "type": "array", "source": "sentiment_analyzer.top_pros"},
+        {"name": "cons", "type": "array", "source": "sentiment_analyzer.top_cons"},
+        {"name": "credibility", "type": "object", "source": "credibility_checker.credibility_result"},
+        {"name": "buy_advice", "type": "string", "source": "sentiment_analyzer.buy_recommendation"}
+      ]
+    }
+  ],
+  "edges": [
+    {"source": "start", "target": "review_collector", "source_handle": "output", "target_handle": "input"},
+    {"source": "review_collector", "target": "sentiment_analyzer", "source_handle": "output", "target_handle": "input"},
+    {"source": "sentiment_analyzer", "target": "credibility_checker", "source_handle": "output", "target_handle": "input"},
+    {"source": "credibility_checker", "target": "end", "source_handle": "output", "target_handle": "input"}
+  ],
+  "variables": [
+    {"name": "analysis_count", "type": "number", "default": 0, "description": "评价分析次数"}
+  ]
+}

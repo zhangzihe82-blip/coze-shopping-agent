@@ -1,0 +1,178 @@
+{
+  "workflow_id": "",
+  "name": "营销内容生成",
+  "description": "为商品生成营销推广内容：短视频脚本、社交媒体文案、商品详情页文案、直播带货话术",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {
+      "node_id": "start",
+      "type": "Start",
+      "name": "营销需求输入",
+      "position": {"x": 300, "y": 50},
+      "input_params": [
+        {
+          "name": "product_info",
+          "type": "object",
+          "description": "商品信息：名称、品类、价格、核心卖点、目标人群",
+          "required": true
+        },
+        {
+          "name": "content_type",
+          "type": "string",
+          "description": "内容类型：短视频脚本/小红书文案/商品详情页/直播话术/公众号推文",
+          "required": true
+        },
+        {
+          "name": "platform",
+          "type": "string",
+          "description": "发布平台：抖音/小红书/淘宝/拼多多/微信",
+          "required": true
+        },
+        {
+          "name": "tone",
+          "type": "string",
+          "description": "文案风格：专业/活泼/幽默/情感/极简",
+          "required": false,
+          "default": "活泼"
+        }
+      ],
+      "output_params": [
+        {"name": "product_info", "type": "object"},
+        {"name": "content_type", "type": "string"},
+        {"name": "platform", "type": "string"},
+        {"name": "tone", "type": "string"}
+      ]
+    },
+    {
+      "node_id": "competitor_research",
+      "type": "HTTP",
+      "name": "竞品营销参考",
+      "position": {"x": 100, "y": 200},
+      "plugin": "web_search",
+      "search_query": "{{product_info.name}} {{product_info.category}} 营销文案 推广方案 爆款",
+      "max_results": 5,
+      "input_params": [
+        {"name": "product_info", "type": "object", "source": "start.product_info"}
+      ],
+      "output_params": [
+        {"name": "competitor_content", "type": "array"}
+      ]
+    },
+    {
+      "node_id": "user_insight_generator",
+      "type": "LLM",
+      "name": "目标用户洞察",
+      "position": {"x": 300, "y": 200},
+      "model": "doubao-pro-32k",
+      "temperature": 0.5,
+      "prompt_template": "根据商品信息，分析目标用户画像和消费心理。\n\n商品信息：{{product_info}}\n发布平台：{{platform}}\n\n请分析：\n1. 目标用户画像（年龄、性别、兴趣、消费习惯）\n2. 用户痛点（为什么需要这个产品）\n3. 购买动机（什么情况下会下单）\n4. 内容偏好（这类用户喜欢看什么类型的内容）\n5. 平台特性（该平台的内容风格和算法偏好）\n\n输出为结构化分析，供后续内容生成使用。",
+      "input_params": [
+        {"name": "product_info", "type": "object", "source": "start.product_info"},
+        {"name": "platform", "type": "string", "source": "start.platform"}
+      ],
+      "output_params": [
+        {"name": "user_insight", "type": "string"},
+        {"name": "target_persona", "type": "object"},
+        {"name": "platform_strategy", "type": "string"}
+      ]
+    },
+    {
+      "node_id": "hook_generator",
+      "type": "LLM",
+      "name": "爆款钩子生成",
+      "position": {"x": 500, "y": 200},
+      "model": "doubao-pro-32k",
+      "temperature": 0.9,
+      "prompt_template": "为「{{product_info.name}}」生成5个爆款内容钩子（注意力抓取的开头）。\n\n目标平台：{{platform}}\n文案风格：{{tone}}\n用户画像：{{target_persona}}\n\n钩子类型要求（各一个）：\n1. 悬念式 - 引发好奇\n2. 痛点式 - 直击问题\n3. 对比式 - 颠覆认知\n4. 数据式 - 用数字说话\n5. 场景式 - 代入感\n\n每个钩子不超过30字，要让人忍不住想继续看下去。",
+      "input_params": [
+        {"name": "product_info", "type": "object", "source": "start.product_info"},
+        {"name": "platform", "type": "string", "source": "start.platform"},
+        {"name": "tone", "type": "string", "source": "start.tone"},
+        {"name": "target_persona", "type": "object", "source": "user_insight_generator.target_persona"}
+      ],
+      "output_params": [
+        {"name": "hooks", "type": "array"}
+      ]
+    },
+    {
+      "node_id": "content_generator",
+      "type": "LLM",
+      "name": "内容生成引擎",
+      "position": {"x": 300, "y": 370},
+      "model": "doubao-pro-128k",
+      "temperature": 0.8,
+      "max_tokens": 4096,
+      "prompt_template": "你是一个顶级电商营销文案专家。根据以下信息生成营销内容。\n\n## 商品信息\n产品名称：{{product_info.name}}\n品类：{{product_info.category}}\n价格：{{product_info.price}}\n核心卖点：{{product_info.selling_points}}\n目标人群：{{product_info.target_audience}}\n\n## 内容要求\n内容类型：{{content_type}}\n发布平台：{{platform}}\n文案风格：{{tone}}\n\n## 参考信息\n用户洞察：{{user_insight}}\n平台策略：{{platform_strategy}}\n可选钩子：{{hooks}}\n竞品参考：{{competitor_content}}\n\n## 生成指令\n\n{% if content_type == '短视频脚本' %}\n请生成一个完整的短视频脚本，包含：\n1. 视频标题（吸引点击）\n2. 时长规划（30-60秒）\n3. 分镜脚本：\n   - 0-3秒：黄金钩子（选一个hook）\n   - 3-15秒：痛点/场景展开\n   - 15-40秒：产品解决方案展示\n   - 40-55秒：使用效果/社会证明\n   - 55-60秒：行动号召\n4. 口播文案（逐句）\n5. 画面建议（每个镜头配什么画面）\n6. BGM建议\n7. 3-5个话题标签\n\n{% elif content_type == '小红书文案' %}\n请生成小红书种草文案，包含：\n1. 标题（含emoji，吸引点击）\n2. 正文（口语化、真实感，300-500字）\n3. 分段结构：\n   - 开头：使用场景/个人经历引入\n   - 中间：产品亮点分点介绍（每点配emoji）\n   - 结尾：总结+引导互动\n4. 3-5个精准话题标签\n5. 配图建议\n\n{% elif content_type == '商品详情页' %}\n请生成电商商品详情页文案，包含：\n1. 主标题+副标题\n2. 核心卖点海报文案（3屏）\n3. 产品参数要点\n4. 场景化使用说明\n5. 用户痛点解决方案\n6. 售后保障说明\n7. 行动号召\n\n{% elif content_type == '直播话术' %}\n请生成直播带货话术，包含：\n1. 开场话术（留人）\n2. 产品介绍话术（3分钟版本）\n3. 逼单话术（限时优惠）\n4. 互动话术（引导评论/点赞）\n5. 问答话术（常见问题应对）\n6. 转场话术\n\n{% elif content_type == '公众号推文' %}\n请生成公众号推文，包含：\n1. 推文标题（3个备选）\n2. 引导关注语\n3. 正文内容（800-1200字，深度种草）\n4. 图文排版建议\n5. 文末互动引导\n{% endif %}\n\n输出格式完整的营销内容。",
+      "input_params": [
+        {"name": "product_info", "type": "object", "source": "start.product_info"},
+        {"name": "content_type", "type": "string", "source": "start.content_type"},
+        {"name": "platform", "type": "string", "source": "start.platform"},
+        {"name": "tone", "type": "string", "source": "start.tone"},
+        {"name": "user_insight", "type": "string", "source": "user_insight_generator.user_insight"},
+        {"name": "platform_strategy", "type": "string", "source": "user_insight_generator.platform_strategy"},
+        {"name": "hooks", "type": "array", "source": "hook_generator.hooks"},
+        {"name": "competitor_content", "type": "array", "source": "competitor_research.competitor_content"}
+      ],
+      "output_params": [
+        {"name": "generated_content", "type": "string"},
+        {"name": "hashtags", "type": "array"},
+        {"name": "title", "type": "string"}
+      ]
+    },
+    {
+      "node_id": "compliance_checker",
+      "type": "LLM",
+      "name": "合规检查",
+      "position": {"x": 300, "y": 550},
+      "model": "doubao-pro-32k",
+      "temperature": 0.1,
+      "prompt_template": "检查生成的营销内容是否符合平台规则和法律法规。\n\n生成内容：{{generated_content}}\n发布平台：{{platform}}\n\n检查项：\n1. 是否含有违禁词/极限词（第一、最好、唯一、国家级等）\n2. 是否涉嫌虚假宣传\n3. 是否符合广告法要求\n4. 是否含有敏感信息\n5. 是否符合平台内容规范\n\n输出JSON：{\n  \"passed\": true/false,\n  \"violations\": [\"违规项\"],\n  \"risk_level\": \"低/中/高\",\n  \"corrected_content\": \"修改后的内容（如有违规）\"\n}",
+      "input_params": [
+        {"name": "generated_content", "type": "string", "source": "content_generator.generated_content"},
+        {"name": "platform", "type": "string", "source": "start.platform"}
+      ],
+      "output_params": [
+        {"name": "compliance_result", "type": "object"},
+        {"name": "passed", "type": "boolean"}
+      ]
+    },
+    {
+      "node_id": "compliance_branch",
+      "type": "Condition",
+      "name": "是否通过合规检查",
+      "position": {"x": 300, "y": 690},
+      "condition_expression": "{{compliance_checker.passed}} == true",
+      "true_branch": "end",
+      "false_branch": "content_generator"
+    },
+    {
+      "node_id": "end",
+      "type": "End",
+      "name": "输出营销内容",
+      "position": {"x": 300, "y": 830},
+      "output_params": [
+        {"name": "final_content", "type": "string", "source": "compliance_checker.corrected_content"},
+        {"name": "title", "type": "string", "source": "content_generator.title"},
+        {"name": "hashtags", "type": "array", "source": "content_generator.hashtags"},
+        {"name": "hooks", "type": "array", "source": "hook_generator.hooks"},
+        {"name": "compliance", "type": "object", "source": "compliance_checker.compliance_result"}
+      ]
+    }
+  ],
+  "edges": [
+    {"source": "start", "target": "competitor_research", "source_handle": "output", "target_handle": "input"},
+    {"source": "start", "target": "user_insight_generator", "source_handle": "output", "target_handle": "input"},
+    {"source": "start", "target": "hook_generator", "source_handle": "output", "target_handle": "input"},
+    {"source": "competitor_research", "target": "content_generator", "source_handle": "output", "target_handle": "input"},
+    {"source": "user_insight_generator", "target": "content_generator", "source_handle": "output", "target_handle": "input"},
+    {"source": "hook_generator", "target": "content_generator", "source_handle": "output", "target_handle": "input"},
+    {"source": "content_generator", "target": "compliance_checker", "source_handle": "output", "target_handle": "input"},
+    {"source": "compliance_checker", "target": "compliance_branch", "source_handle": "output", "target_handle": "input"},
+    {"source": "compliance_branch", "target": "end", "source_handle": "true", "target_handle": "input"},
+    {"source": "compliance_branch", "target": "content_generator", "source_handle": "false", "target_handle": "input"}
+  ],
+  "variables": [
+    {"name": "generation_count", "type": "number", "default": 0, "description": "营销内容生成次数"}
+  ]
+}
