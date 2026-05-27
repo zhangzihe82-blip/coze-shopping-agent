@@ -189,8 +189,9 @@
     @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     @keyframes spin { to{transform:rotate(360deg)} }
 
-    @media (max-width:1024px) { .cards-grid { grid-template-columns:repeat(2, 1fr); } }
-    @media (max-width:640px) { .cards-grid { grid-template-columns:1fr; } .page { padding:20px 14px 40px; } }
+    @media (max-width:1200px) { .cards-grid { grid-template-columns:repeat(3, 1fr); } }
+    @media (max-width:768px) { .cards-grid { grid-template-columns:repeat(2, 1fr); } }
+    @media (max-width:480px) { .cards-grid { grid-template-columns:1fr; } .page { padding:20px 14px 40px; } }
   </style>
 </head>
 <body>
@@ -218,7 +219,7 @@
     </div>
 
     <!-- Feature Cards -->
-    <div class="cards-grid" style="grid-template-columns:repeat(4, 1fr);">
+    <div class="cards-grid" style="grid-template-columns:repeat(5, 1fr);">
       <div class="card" data-panel="trends">
         <div class="card-icon">📈</div>
         <h3>市场趋势</h3>
@@ -242,6 +243,12 @@
         <h3>每日总结</h3>
         <p>自动生成店铺运营日报，复盘今日、规划明日</p>
         <span class="card-badge badge-purple">智能报告</span>
+      </div>
+      <div class="card" data-panel="qa">
+        <div class="card-icon">💬</div>
+        <h3>运营问答</h3>
+        <p>商品定位、平台规则、营销策略，有问必答</p>
+        <span class="card-badge badge-accent">专家在线</span>
       </div>
     </div>
 
@@ -304,6 +311,22 @@
           <button class="btn btn-primary" id="btnDailyReport">生成报告</button>
         </div>
         <div id="drResult" style="margin-top:16px;"></div>
+      </div>
+    </div>
+
+    <div class="result-panel" id="panelQa">
+      <div class="result-header">
+        <h2>💬 运营问答</h2>
+        <button class="result-close">&times;</button>
+      </div>
+      <div class="result-body">
+        <h4 style="font-size:15px;font-weight:600;margin-bottom:6px;">向电商运营专家提问</h4>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">商品定位、平台规则、营销策略、定价分析……直接提问即可获得专业解答</p>
+        <div class="input-row">
+          <input class="input-field" id="qaQuestion" placeholder="输入你的问题，如：拼多多新店如何获取第一波流量？" />
+          <button class="btn btn-primary" id="btnQa">提问</button>
+        </div>
+        <div id="qaResult" style="margin-top:16px;"></div>
       </div>
     </div>
   </div>
@@ -385,7 +408,7 @@
       document.addEventListener('keydown', function(e) { if (e.key==='Escape' && !settingsOverlay.classList.contains('hidden')) settingsOverlay.classList.add('hidden'); });
 
       // ─── Panel Toggle ───
-      var panels = { trends: 'panelTrends', policyNews: 'panelPolicyNews', competitors: 'panelCompetitors', dailyReport: 'panelDailyReport' };
+      var panels = { trends: 'panelTrends', policyNews: 'panelPolicyNews', competitors: 'panelCompetitors', dailyReport: 'panelDailyReport', qa: 'panelQa' };
 
       document.querySelectorAll('.card').forEach(function(card) {
         card.addEventListener('click', function() {
@@ -470,6 +493,24 @@
           .then(function(r) { return r.json(); })
           .then(function(d) { btn.disabled=false; btn.textContent='生成报告'; resultEl.innerHTML = d.ok ? renderMD(d.content) : '<p style="color:var(--red)">'+d.error+'</p>'; })
           .catch(function(e) { btn.disabled=false; btn.textContent='生成报告'; resultEl.innerHTML = '<p style="color:var(--red)">请求失败: '+e.message+'</p>'; });
+      });
+
+      // ─── Q&A ───
+      document.getElementById('btnQa').addEventListener('click', function() {
+        var question = document.getElementById('qaQuestion').value.trim();
+        if (!question) { alert('请输入你的问题'); return; }
+        var btn = this;
+        btn.disabled = true; btn.textContent = '思考中...';
+        var resultEl = document.getElementById('qaResult');
+        resultEl.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+        fetch('/api/qa/ask', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:apiKey, question:question}) })
+          .then(function(r) { return r.json(); })
+          .then(function(d) { btn.disabled=false; btn.textContent='提问'; resultEl.innerHTML = d.ok ? renderMD(d.content) : '<p style="color:var(--red)">'+d.error+'</p>'; })
+          .catch(function(e) { btn.disabled=false; btn.textContent='提问'; resultEl.innerHTML = '<p style="color:var(--red)">请求失败: '+e.message+'</p>'; });
+      });
+
+      document.getElementById('qaQuestion').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('btnQa').click();
       });
     })();
   </script>

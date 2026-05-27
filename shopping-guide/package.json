@@ -1,0 +1,14 @@
+{
+  "name": "lingxi-daogou",
+  "version": "2.0.0",
+  "description": "灵犀导购 - AI电商智能购物助手（独立版）",
+  "type": "module",
+  "scripts": {
+    "dev": "node main.js",
+    "start": "node main.js"
+  },
+  "dependencies": {
+    "coze-coding-dev-sdk": "latest",
+    "express": "^4.21.0"
+  }
+}

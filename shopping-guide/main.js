@@ -1,30 +1,28 @@
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
-import { checkConfig, DEEPSEEK_MODEL, DEEPSEEK_API_KEY } from "./src/config/deepseek.js";
+import { DEEPSEEK_MODEL, DEEPSEEK_API_KEY } from "./src/config/deepseek.js";
+import chatRouter from "./src/routes/chat.js";
+import suggestionsRouter from "./src/routes/suggestions.js";
 import healthRouter from "./src/routes/health.js";
 import settingsRouter from "./src/routes/settings.js";
-import xhsRouter from "./src/routes/xhs.js";
-import marketRouter from "./src/routes/market.js";
-import qaRouter from "./src/routes/qa.js";
+import { deleteSession } from "./src/agent/sessionManager.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// API 路由
+app.use("/api/chat", chatRouter);
+app.use("/api/suggestions", suggestionsRouter);
 app.use("/api/health", healthRouter);
 app.use("/api", settingsRouter);
-app.use("/api", xhsRouter);
-app.use("/api", marketRouter);
-app.use("/api", qaRouter);
 
-// 页面路由
-app.get("/xhs", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "xhs.html"));
+app.delete("/api/chat/:session_id", (req, res) => {
+  deleteSession(req.params.session_id || "default");
+  res.json({ ok: true });
 });
 
 app.get("/", (req, res) => {
@@ -32,9 +30,8 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`📊 灵犀市场洞察已启动 → http://localhost:${PORT}`);
+  console.log(`🛍️  灵犀导购已启动 → http://localhost:${PORT}`);
   console.log(`🧠 LLM: DeepSeek (${DEEPSEEK_MODEL})`);
-  console.log(`📕 小红书发布 → http://localhost:${PORT}/xhs`);
   if (DEEPSEEK_API_KEY) {
     console.log(`🔑 API Key: ${DEEPSEEK_API_KEY.slice(0, 8)}...${DEEPSEEK_API_KEY.slice(-4)}`);
   } else {
