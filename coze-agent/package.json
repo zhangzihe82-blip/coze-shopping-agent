@@ -11,6 +11,7 @@
     "coze-coding-dev-sdk": "latest",
     "express": "^4.21.0",
     "marked": "^12.0.0",
-    "multer": "^2.1.1"
+    "multer": "^2.1.1",
+    "puppeteer": "^25.1.0"
   }
 }

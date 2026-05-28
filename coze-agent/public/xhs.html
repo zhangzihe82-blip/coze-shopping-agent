@@ -276,6 +276,47 @@
       <p>上传素材 → AI生成文案 → 一键发布，全流程自动化</p>
     </div>
 
+    <!-- Account Connect -->
+    <div class="account-card" id="accountCard" style="margin-bottom:24px;">
+      <div class="account-avatar" id="accountAvatar">📕</div>
+      <div style="flex:1;">
+        <div style="font-weight:600;font-size:15px;" id="accountName">未关联小红书账号</div>
+        <div style="font-size:13px;color:var(--text-tertiary);margin-top:4px;" id="accountStatus">发布前需先关联账号</div>
+      </div>
+      <button class="btn btn-primary" id="btnConnectAccount" style="height:34px;font-size:13px;padding:0 16px;">关联账号</button>
+    </div>
+
+    <!-- Connect Modal -->
+    <div id="connectModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:16px;padding:28px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;">
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px;">关联小红书账号</h3>
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+          需要你的小红书创作者平台Cookie来完成自动发布。按以下步骤获取：
+        </p>
+        <ol style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;line-height:1.8;padding-left:18px;">
+          <li>用 <strong>Chrome/Edge 浏览器</strong>打开并登录 <a href="https://creator.xiaohongshu.com" target="_blank" style="color:var(--accent);">小红书创作服务平台</a></li>
+          <li>按 <strong>F12</strong> 打开开发者工具</li>
+          <li>点击 <strong>Application（应用程序）</strong> → <strong>Cookies</strong> → 选择 <strong>xiaohongshu.com</strong></li>
+          <li>在下方Cookie列表中任选一条，全选(Ctrl+A)→复制(Ctrl+C)所有Cookie</li>
+          <li>粘贴到下方输入框中</li>
+        </ol>
+        <div class="form-group">
+          <label class="form-label">小红书昵称</label>
+          <input class="form-input" id="inputNickname" placeholder="你的小红书昵称（用于标识）" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cookie 数据</label>
+          <p class="form-hint">从浏览器开发者工具中复制粘贴完整的Cookie数据</p>
+          <textarea class="form-textarea" id="inputCookies" style="min-height:100px;font-size:12px;font-family:monospace;"
+            placeholder="粘贴Cookie数据...&#10;例如: a1=xxxx; webId=xxxx; web_session=xxxx; ..."></textarea>
+        </div>
+        <div class="btn-row" style="justify-content:flex-end;">
+          <button class="btn btn-secondary" id="btnCancelConnect">取消</button>
+          <button class="btn btn-primary" id="btnSaveAccount">保存并关联</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Steps -->
     <div class="steps">
       <div class="step active" data-step="1">
@@ -683,6 +724,209 @@
       });
 
       loadHistory();
+      loadAccount();
+
+      // ─── Account Management ───
+      var accountModal = document.getElementById('connectModal');
+      var btnConnect = document.getElementById('btnConnectAccount');
+      var btnCancelConnect = document.getElementById('btnCancelConnect');
+      var btnSaveAccount = document.getElementById('btnSaveAccount');
+      var inputNickname = document.getElementById('inputNickname');
+      var inputCookies = document.getElementById('inputCookies');
+      var accountName = document.getElementById('accountName');
+      var accountStatus = document.getElementById('accountStatus');
+      var accountAvatar = document.getElementById('accountAvatar');
+
+      btnConnect.addEventListener('click', function() {
+        accountModal.style.display = 'flex';
+      });
+
+      btnCancelConnect.addEventListener('click', function() {
+        accountModal.style.display = 'none';
+      });
+
+      accountModal.addEventListener('click', function(e) {
+        if (e.target === accountModal) accountModal.style.display = 'none';
+      });
+
+      btnSaveAccount.addEventListener('click', function() {
+        var nickname = inputNickname.value.trim();
+        var cookies = inputCookies.value.trim();
+        if (!nickname) { alert('请输入小红书昵称'); return; }
+        if (!cookies) { alert('请粘贴Cookie数据'); return; }
+
+        btnSaveAccount.disabled = true;
+        btnSaveAccount.textContent = '保存中...';
+
+        fetch('/api/xhs/account/connect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nickname: nickname, cookies: cookies })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          btnSaveAccount.disabled = false;
+          btnSaveAccount.textContent = '保存并关联';
+          if (d.ok) {
+            accountModal.style.display = 'none';
+            updateAccountUI(d.account);
+            alert('账号关联成功！Cookie数量：' + (d.account.cookieCount || 0));
+          } else {
+            alert('关联失败: ' + (d.error || '未知错误'));
+          }
+        })
+        .catch(function(e) {
+          btnSaveAccount.disabled = false;
+          btnSaveAccount.textContent = '保存并关联';
+          alert('请求失败: ' + e.message);
+        });
+      });
+
+      function loadAccount() {
+        fetch('/api/xhs/account')
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d.ok && d.account) updateAccountUI(d.account);
+          });
+      }
+
+      function updateAccountUI(acc) {
+        if (acc && acc.status === 'connected') {
+          accountName.textContent = acc.nickname || '小红书创作者';
+          accountStatus.textContent = '已关联 · Cookie有效（' + (acc.cookieCount || 0) + '个）';
+          accountStatus.style.color = '#34C759';
+          accountAvatar.textContent = '✅';
+          accountAvatar.style.background = 'linear-gradient(135deg, #34C759, #30D158)';
+          btnConnect.textContent = '更换账号';
+          btnConnect.className = 'btn btn-secondary';
+        } else {
+          accountName.textContent = '未关联小红书账号';
+          accountStatus.textContent = '发布前需先关联账号';
+          accountStatus.style.color = 'var(--text-tertiary)';
+          accountAvatar.textContent = '📕';
+          accountAvatar.style.background = 'linear-gradient(135deg, #FF2442, #FF6B81)';
+          btnConnect.textContent = '关联账号';
+          btnConnect.className = 'btn btn-primary';
+        }
+      }
+
+      // Override publish to check account first
+      var origPublishClick = btnPublish.onclick;
+      btnPublish.addEventListener('click', function(e) {
+        var title = document.getElementById('finalTitle').value.trim();
+        var body = document.getElementById('finalBody').value.trim();
+        var tags = document.getElementById('finalTags').value.trim();
+
+        if (!title || !body) { alert('标题和正文不能为空'); return; }
+
+        btnPublish.disabled = true;
+        btnPublish.textContent = '⏳ 发布中（浏览器自动化，约需15-30秒）...';
+
+        fetch('/api/xhs/publish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: title, body: body, tags: tags,
+            images: uploadedFiles.map(function(f) { return f.url; }),
+            api_key: apiKey
+          })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          btnPublish.disabled = false;
+          btnPublish.textContent = '🚀 一键发布到小红书';
+          if (d.ok) {
+            document.getElementById('doneMsg').textContent = d.record.note;
+            goStep(4);
+            loadHistory();
+          } else if (d.needAccount) {
+            alert('请先关联小红书账号（点击上方"关联账号"按钮）');
+            accountModal.style.display = 'flex';
+          } else {
+            alert('发布失败: ' + (d.error || '未知错误'));
+          }
+        })
+        .catch(function(e) {
+          btnPublish.disabled = false;
+          btnPublish.textContent = '🚀 一键发布到小红书';
+          alert('请求失败: ' + e.message);
+        });
+      });
+
+      // Add retry button for history items
+      var origLoadHistory = loadHistory;
+      loadHistory = function() {
+        fetch('/api/xhs/history')
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (!d.history || d.history.length === 0) {
+              historyList.innerHTML = '<p style="color:var(--text-tertiary);font-size:14px;">暂无发布记录</p>';
+              btnClearAll.style.display = 'none';
+              return;
+            }
+            btnClearAll.style.display = '';
+            historyList.innerHTML = '<table class="history-table"><thead><tr>' +
+              '<th>标题</th><th>标签</th><th>时间</th><th>状态</th><th style="width:80px;">操作</th></tr></thead><tbody>' +
+              d.history.map(function(h) {
+                var statusBadge = h.status === 'published' ? '<span class="badge badge-ok">已发布</span>' :
+                                  h.status === 'submitted' ? '<span class="badge badge-warn">已提交</span>' :
+                                  h.status === 'publishing' ? '<span class="badge badge-info">发布中</span>' :
+                                  h.status === 'draft' ? '<span class="badge badge-warn">待手动发布</span>' :
+                                  '<span class="badge" style="background:#FFE5E5;color:#FF3B30;">失败</span>';
+                var retryBtn = (h.status === 'failed' || h.status === 'draft')
+                  ? '<button class="btn-retry" data-id="' + h.id + '" style="background:none;border:1px solid var(--accent);color:var(--accent);cursor:pointer;font-size:11px;padding:3px 8px;border-radius:6px;">重试</button>'
+                  : '';
+                var delBtn = '<button class="btn-del-row" data-id="' + h.id + '" style="background:none;border:none;color:#FF3B30;cursor:pointer;font-size:16px;opacity:0.5;transition:all 0.2s;margin-left:4px;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">&times;</button>';
+                return '<tr id="row-' + h.id + '">' +
+                  '<td><strong>' + (h.title || '(无标题)').substring(0, 30) + '</strong></td>' +
+                  '<td>' + (h.tags||[]).map(function(t){return '<span class="note-tag" style="font-size:11px;">'+t+'</span>';}).join(' ') + '</td>' +
+                  '<td style="font-size:12px;">' + new Date(h.createdAt).toLocaleString('zh-CN') + '</td>' +
+                  '<td>' + statusBadge + (h.note ? '<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">' + h.note.substring(0, 40) + '</div>' : '') + '</td>' +
+                  '<td style="white-space:nowrap;">' + retryBtn + delBtn + '</td>' +
+                  '</tr>';
+              }).join('') +
+              '</tbody></table>';
+
+            // Bind retry buttons
+            historyList.querySelectorAll('.btn-retry').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                var id = this.dataset.id;
+                if (!confirm('确定重新发布这条笔记吗？将启动浏览器自动化流程。')) return;
+                this.disabled = true;
+                this.textContent = '发布中...';
+                var self = this;
+                fetch('/api/xhs/publish/' + id + '/retry', { method: 'POST' })
+                  .then(function(r) { return r.json(); })
+                  .then(function(res) {
+                    if (res.ok) {
+                      alert('重新发布结果：' + res.record.note);
+                      loadHistory();
+                    } else {
+                      alert('重试失败: ' + (res.error || '未知错误'));
+                      self.disabled = false;
+                      self.textContent = '重试';
+                    }
+                  });
+              });
+            });
+
+            // Bind delete buttons
+            historyList.querySelectorAll('.btn-del-row').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                var id = this.dataset.id;
+                if (!confirm('确定删除这条发布记录吗？')) return;
+                var row = document.getElementById('row-' + id);
+                if (row) row.style.opacity = '0.3';
+                fetch('/api/xhs/history/' + id, { method: 'DELETE' })
+                  .then(function(r) { return r.json(); })
+                  .then(function(res) {
+                    if (res.ok) loadHistory();
+                    else { alert('删除失败'); if (row) row.style.opacity = '1'; }
+                  });
+              });
+            });
+          });
+      };
     })();
   </script>
 </body>

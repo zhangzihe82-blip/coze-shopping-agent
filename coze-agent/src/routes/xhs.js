@@ -4,7 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { saveAccount, getAccount, disconnectAccount } from "../xhs/account.js";
 import { generateCopy, generateCopyVariants } from "../xhs/contentGen.js";
-import { publishToXHS, getPublishHistory, deletePublishById, clearAllHistory } from "../xhs/publisher.js";
+import { publishToXHS, retryPublish, getPublishHistory, deletePublishById, clearAllHistory } from "../xhs/publisher.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const router = Router();
@@ -72,15 +72,38 @@ router.post("/xhs/publish", async (req, res) => {
     return res.status(400).json({ ok: false, error: "标题和正文不能为空" });
   }
 
+  const account = getAccount();
+  if (!account || !account.cookies || Object.keys(account.cookies).length === 0) {
+    return res.status(400).json({
+      ok: false,
+      error: "请先关联小红书账号（需要提供Cookie）",
+      needAccount: true,
+    });
+  }
+
   try {
-    const account = getAccount();
     const record = await publishToXHS({
       title,
       body,
       tags,
       images: images || [],
-      cookies: account?.cookies,
+      cookies: account.cookies,
     });
+    res.json({ ok: true, record });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// 重试发布
+router.post("/xhs/publish/:id/retry", async (req, res) => {
+  const account = getAccount();
+  if (!account || !account.cookies || Object.keys(account.cookies).length === 0) {
+    return res.status(400).json({ ok: false, error: "请先关联小红书账号（需要提供Cookie）" });
+  }
+
+  try {
+    const record = await retryPublish(req.params.id, account.cookies);
     res.json({ ok: true, record });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
