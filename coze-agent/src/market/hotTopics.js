@@ -1,4 +1,4 @@
-import { deepseekStream } from "../llm/client.js";
+import { askAI } from "../llm/client.js";
 import { searchWeb } from "../search/webSearch.js";
 
 function now() {
@@ -89,23 +89,12 @@ async function getMarketTrends(apiKey = "") {
     if (r) searchResult += r + "\n\n";
   }
 
-  const messages = [
-    { role: "system", content: buildTrendsPrompt() },
-    {
-      role: "user",
-      content: [
-        `当前日期：${now().dateStr}`,
-        `请分析现在市场上什么卖得最好。要求只使用${year}年的数据。`,
-        searchResult ? `以下是实时搜索数据供参考：\n\n${searchResult}` : "",
-      ].join("\n"),
-    },
-  ];
-
-  let fullText = "";
-  for await (const chunk of deepseekStream(messages, apiKey)) {
-    if (chunk.content) fullText += chunk.content;
-  }
-  return { content: fullText, generatedAt: new Date().toISOString() };
+  const content = await askAI(buildTrendsPrompt(), [
+    `当前日期：${now().dateStr}`,
+    `请分析现在市场上什么卖得最好。要求只使用${year}年的数据。`,
+    searchResult ? `以下是实时搜索数据供参考：\n\n${searchResult}` : "",
+  ].join("\n"), apiKey);
+  return { content, generatedAt: new Date().toISOString() };
 }
 
 // 关键词搜索政策与新闻
@@ -126,24 +115,13 @@ async function searchPolicyNews(keyword = "", apiKey = "") {
     if (r) searchResult += r + "\n\n";
   }
 
-  const messages = [
-    { role: "system", content: buildPolicyPrompt() },
-    {
-      role: "user",
-      content: [
-        `搜索关键词：${keyword}`,
-        `当前日期：${now().dateStr}`,
-        `请整理与"${keyword}"相关的最新政策和新闻。`,
-        searchResult ? `实时搜索数据：\n\n${searchResult}` : "",
-      ].join("\n"),
-    },
-  ];
-
-  let fullText = "";
-  for await (const chunk of deepseekStream(messages, apiKey)) {
-    if (chunk.content) fullText += chunk.content;
-  }
-  return { content: fullText, keyword, generatedAt: new Date().toISOString() };
+  const content = await askAI(buildPolicyPrompt(), [
+    `搜索关键词：${keyword}`,
+    `当前日期：${now().dateStr}`,
+    `请整理与"${keyword}"相关的最新政策和新闻。`,
+    searchResult ? `实时搜索数据：\n\n${searchResult}` : "",
+  ].join("\n"), apiKey);
+  return { content, keyword, generatedAt: new Date().toISOString() };
 }
 
 export { getMarketTrends, searchPolicyNews };

@@ -1,4 +1,4 @@
-import { deepseekStream } from "../llm/client.js";
+import { askAI } from "../llm/client.js";
 
 const QA_PROMPT = `你是电商运营专家，精通电商平台规则、商品定位、营销策略、供应链管理等。你的任务是帮助电商商家解答运营中的各类问题。
 
@@ -20,20 +20,13 @@ const QA_PROMPT = `你是电商运营专家，精通电商平台规则、商品�
 - 不确定的地方坦诚说明
 - 用中文回答`;
 
+export { QA_PROMPT };
+
 export async function askQuestion(question, apiKey = "") {
   if (!question || !question.trim()) {
     return { content: "请输入你的问题", generatedAt: new Date().toISOString() };
   }
 
-  const messages = [
-    { role: "system", content: QA_PROMPT },
-    { role: "user", content: question },
-  ];
-
-  let fullText = "";
-  for await (const chunk of deepseekStream(messages, apiKey)) {
-    if (chunk.content) fullText += chunk.content;
-  }
-
-  return { content: fullText, generatedAt: new Date().toISOString() };
+  const content = await askAI(QA_PROMPT, question, apiKey);
+  return { content, generatedAt: new Date().toISOString() };
 }

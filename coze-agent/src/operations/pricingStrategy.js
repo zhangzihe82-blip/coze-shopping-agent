@@ -1,4 +1,4 @@
-import { deepseekStream } from "../llm/client.js";
+import { askAI } from "../llm/client.js";
 
 const PROMPT = `你是电商定价策略专家，精通成本核算、竞品比价、促销定价、价格心理学和多平台差异化定价。
 
@@ -28,6 +28,8 @@ const PROMPT = `你是电商定价策略专家，精通成本核算、竞品比�
 ## ⚠️ 避雷提醒
 - 该品类最容易被平台判定为「价格违规」的操作`;
 
+export { PROMPT as PRICING_PROMPT };
+
 export async function getPricingAdvice(params = {}, apiKey = "") {
   const { product = "", cost = "", platform = "", competitors = "" } = params;
 
@@ -43,14 +45,6 @@ export async function getPricingAdvice(params = {}, apiKey = "") {
     `请给出完整的定价策略和促销规划。`,
   ].filter(Boolean).join("\n");
 
-  const messages = [
-    { role: "system", content: PROMPT },
-    { role: "user", content: userPrompt },
-  ];
-
-  let fullText = "";
-  for await (const chunk of deepseekStream(messages, apiKey)) {
-    if (chunk.content) fullText += chunk.content;
-  }
-  return { content: fullText, params, generatedAt: new Date().toISOString() };
+  const content = await askAI(PROMPT, userPrompt, apiKey);
+  return { content, params, generatedAt: new Date().toISOString() };
 }

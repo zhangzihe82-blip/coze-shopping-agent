@@ -1,4 +1,4 @@
-import { deepseekStream } from "../llm/client.js";
+import { askAI } from "../llm/client.js";
 import { searchWeb } from "../search/webSearch.js";
 
 const COMPETITOR_PROMPT = `你是电商竞争情报分析专家。根据搜索数据，为用户分析竞争对手的情况。
@@ -31,21 +31,11 @@ async function analyzeCompetitors(productCategory = "", apiKey = "") {
     : "电商 热门品类 头部店铺 竞品 2025 2026";
   const searchResult = await searchWeb(query);
 
-  const messages = [
-    { role: "system", content: COMPETITOR_PROMPT },
-    {
-      role: "user",
-      content: searchResult
-        ? `请基于以下实时搜索数据，分析竞争对手情况：\n\n品类：${productCategory || "综合"}\n\n${searchResult}`
-        : `请分析${productCategory || "综合电商"}赛道的竞争对手情况`,
-    },
-  ];
-
-  let fullText = "";
-  for await (const chunk of deepseekStream(messages, apiKey)) {
-    if (chunk.content) fullText += chunk.content;
-  }
-  return { content: fullText, searchResult, generatedAt: new Date().toISOString() };
+  const userPrompt = searchResult
+    ? `请基于以下实时搜索数据，分析竞争对手情况：\n\n品类：${productCategory || "综合"}\n\n${searchResult}`
+    : `请分析${productCategory || "综合电商"}赛道的竞争对手情况`;
+  const content = await askAI(COMPETITOR_PROMPT, userPrompt, apiKey);
+  return { content, searchResult, generatedAt: new Date().toISOString() };
 }
 
 export { analyzeCompetitors };

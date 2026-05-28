@@ -191,6 +191,9 @@
     @keyframes scaleIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
     @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     @keyframes spin { to{transform:rotate(360deg)} }
+    @keyframes blink { 0%,50% { opacity:1 } 51%,100% { opacity:0 } }
+    .typing-cursor { display:inline; font-weight:300; color:var(--accent); animation:blink 1s infinite; font-size:16px; }
+    .streaming-text { display:inline; }
 
     @media (max-width:1200px) { .cards-grid { grid-template-columns:repeat(3, 1fr); } }
     @media (max-width:768px) { .cards-grid { grid-template-columns:repeat(2, 1fr); } }
@@ -655,100 +658,107 @@
           .catch(function(e) { btn.disabled=false; btn.textContent='生成报告'; resultEl.innerHTML = '<p style="color:var(--red)">请求失败: '+e.message+'</p>'; });
       });
 
-      // ─── Q&A ───
+      // ─── Streaming helper (通用流式渲染) ───
+      function fetchStream(url, body, resultEl, btn, btnLabel) {
+        resultEl.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+        fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) })
+          .then(function(response) {
+            if (!response.ok) { return response.json().then(function(d) { throw new Error(d.error || '请求失败'); }); }
+            resultEl.innerHTML = '<div class="streaming-text"></div><span class="typing-cursor">|</span>';
+            var textEl = resultEl.querySelector('.streaming-text');
+            var cursorEl = resultEl.querySelector('.typing-cursor');
+            var fullText = '';
+            var reader = response.body.getReader();
+            var decoder = new TextDecoder();
+            var buf = '';
+
+            function read() {
+              reader.read().then(function(r) {
+                if (r.done) { done(); return; }
+                buf += decoder.decode(r.value, { stream: true });
+                var lines = buf.split('\n');
+                buf = lines.pop() || '';
+                for (var i = 0; i < lines.length; i++) {
+                  var line = lines[i].trim();
+                  if (!line.startsWith('data: ')) continue;
+                  var d = line.slice(6);
+                  if (d === '[DONE]') { done(); return; }
+                  try {
+                    var p = JSON.parse(d);
+                    if (p.error) { resultEl.innerHTML = '<p style="color:var(--red)">'+p.error+'</p>'; done(); return; }
+                    if (p.token) { fullText += p.token; textEl.innerHTML = renderMD(fullText); }
+                  } catch(e) {}
+                }
+                read();
+              }).catch(function(e) { resultEl.innerHTML = '<p style="color:var(--red)">'+e.message+'</p>'; done(); });
+            }
+            function done() {
+              if (cursorEl) cursorEl.remove();
+              btn.disabled = false; btn.textContent = btnLabel;
+            }
+            read();
+          })
+          .catch(function(e) { btn.disabled=false; btn.textContent=btnLabel; resultEl.innerHTML = '<p style="color:var(--red)">'+e.message+'</p>'; });
+      }
+
+      // ─── Q&A (流式打字机效果) ───
       document.getElementById('btnQa').addEventListener('click', function() {
         var question = document.getElementById('qaQuestion').value.trim();
         if (!question) { alert('请输入你的问题'); return; }
-        var btn = this;
-        btn.disabled = true; btn.textContent = '思考中...';
-        var resultEl = document.getElementById('qaResult');
-        resultEl.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
-        fetch('/api/qa/ask', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:apiKey, question:question}) })
-          .then(function(r) { return r.json(); })
-          .then(function(d) { btn.disabled=false; btn.textContent='提问'; resultEl.innerHTML = d.ok ? renderMD(d.content) : '<p style="color:var(--red)">'+d.error+'</p>'; })
-          .catch(function(e) { btn.disabled=false; btn.textContent='提问'; resultEl.innerHTML = '<p style="color:var(--red)">请求失败: '+e.message+'</p>'; });
+        var btn = this; btn.disabled = true; btn.textContent = '思考中...';
+        fetchStream('/api/qa/ask-stream', {api_key:apiKey, question:question}, document.getElementById('qaResult'), btn, '提问');
       });
 
       document.getElementById('qaQuestion').addEventListener('keydown', function(e) {
         if (e.key === 'Enter') document.getElementById('btnQa').click();
       });
 
-      // ─── Rule Monitor ───
+      // ─── Rule Monitor (流式) ───
       document.getElementById('btnRuleMonitor').addEventListener('click', function() {
-        var btn = this;
-        btn.disabled = true; btn.textContent = '查询中...';
-        var resultEl = document.getElementById('ruleResult');
-        resultEl.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
-        fetch('/api/operations/rules', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:apiKey, platform:document.getElementById('rulePlatform').value}) })
-          .then(function(r) { return r.json(); })
-          .then(function(d) { btn.disabled=false; btn.textContent='查询变动'; resultEl.innerHTML = d.ok ? renderMD(d.content) : '<p style="color:var(--red)">'+d.error+'</p>'; })
-          .catch(function(e) { btn.disabled=false; btn.textContent='查询变动'; resultEl.innerHTML = '<p style="color:var(--red)">请求失败: '+e.message+'</p>'; });
+        var btn = this; btn.disabled = true; btn.textContent = '查询中...';
+        fetchStream('/api/operations/rules-stream', {api_key:apiKey, platform:document.getElementById('rulePlatform').value}, document.getElementById('ruleResult'), btn, '查询变动');
       });
 
-      // ─── Product Pick ───
+      // ─── Product Pick (流式) ───
       document.getElementById('btnProductPick').addEventListener('click', function() {
-        var btn = this;
-        btn.disabled = true; btn.textContent = '分析中...';
-        var resultEl = document.getElementById('pickResult');
-        resultEl.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
-        fetch('/api/operations/pick', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:apiKey, budget:document.getElementById('pickBudget').value, platform:document.getElementById('pickPlatform').value, category:document.getElementById('pickCategory').value}) })
-          .then(function(r) { return r.json(); })
-          .then(function(d) { btn.disabled=false; btn.textContent='推荐选品'; resultEl.innerHTML = d.ok ? renderMD(d.content) : '<p style="color:var(--red)">'+d.error+'</p>'; })
-          .catch(function(e) { btn.disabled=false; btn.textContent='推荐选品'; resultEl.innerHTML = '<p style="color:var(--red)">请求失败: '+e.message+'</p>'; });
+        var btn = this; btn.disabled = true; btn.textContent = '分析中...';
+        fetchStream('/api/operations/pick-stream', {api_key:apiKey, budget:document.getElementById('pickBudget').value, platform:document.getElementById('pickPlatform').value, category:document.getElementById('pickCategory').value}, document.getElementById('pickResult'), btn, '推荐选品');
       });
 
       document.getElementById('pickCategory').addEventListener('keydown', function(e) {
         if (e.key === 'Enter') document.getElementById('btnProductPick').click();
       });
 
-      // ─── Content Generation ───
+      // ─── Content Generation (流式) ───
       document.getElementById('btnContentGen').addEventListener('click', function() {
         var product = document.getElementById('contentProduct').value.trim();
         if (!product) { alert('请填写商品描述'); return; }
-        var btn = this;
-        btn.disabled = true; btn.textContent = '创作中...';
-        var resultEl = document.getElementById('contentResult');
-        resultEl.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
-        fetch('/api/operations/content', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:apiKey, product:product, platform:document.getElementById('contentPlatform').value, audience:document.getElementById('contentAudience').value}) })
-          .then(function(r) { return r.json(); })
-          .then(function(d) { btn.disabled=false; btn.textContent='生成内容'; resultEl.innerHTML = d.ok ? renderMD(d.content) : '<p style="color:var(--red)">'+d.error+'</p>'; })
-          .catch(function(e) { btn.disabled=false; btn.textContent='生成内容'; resultEl.innerHTML = '<p style="color:var(--red)">请求失败: '+e.message+'</p>'; });
+        var btn = this; btn.disabled = true; btn.textContent = '创作中...';
+        fetchStream('/api/operations/content-stream', {api_key:apiKey, product:product, platform:document.getElementById('contentPlatform').value, audience:document.getElementById('contentAudience').value}, document.getElementById('contentResult'), btn, '生成内容');
       });
 
       document.getElementById('contentAudience').addEventListener('keydown', function(e) {
         if (e.key === 'Enter') document.getElementById('btnContentGen').click();
       });
 
-      // ─── Service Reply ───
+      // ─── Service Reply (流式) ───
       document.getElementById('btnServiceReply').addEventListener('click', function() {
         var scene = document.getElementById('serviceScene').value;
         if (!scene) { alert('请选择客服场景'); return; }
-        var btn = this;
-        btn.disabled = true; btn.textContent = '生成中...';
-        var resultEl = document.getElementById('serviceResult');
-        resultEl.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
-        fetch('/api/operations/service', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:apiKey, scene:scene, context:document.getElementById('serviceContext').value}) })
-          .then(function(r) { return r.json(); })
-          .then(function(d) { btn.disabled=false; btn.textContent='获取话术'; resultEl.innerHTML = d.ok ? renderMD(d.content) : '<p style="color:var(--red)">'+d.error+'</p>'; })
-          .catch(function(e) { btn.disabled=false; btn.textContent='获取话术'; resultEl.innerHTML = '<p style="color:var(--red)">请求失败: '+e.message+'</p>'; });
+        var btn = this; btn.disabled = true; btn.textContent = '生成中...';
+        fetchStream('/api/operations/service-stream', {api_key:apiKey, scene:scene, context:document.getElementById('serviceContext').value}, document.getElementById('serviceResult'), btn, '获取话术');
       });
 
       document.getElementById('serviceContext').addEventListener('keydown', function(e) {
         if (e.key === 'Enter') document.getElementById('btnServiceReply').click();
       });
 
-      // ─── Pricing Strategy ───
+      // ─── Pricing Strategy (流式) ───
       document.getElementById('btnPricing').addEventListener('click', function() {
         var product = document.getElementById('pricingProduct').value.trim();
         if (!product) { alert('请填写商品名称'); return; }
-        var btn = this;
-        btn.disabled = true; btn.textContent = '分析中...';
-        var resultEl = document.getElementById('pricingResult');
-        resultEl.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
-        fetch('/api/operations/pricing', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:apiKey, product:product, cost:document.getElementById('pricingCost').value, platform:document.getElementById('pricingPlatform').value, competitors:document.getElementById('pricingCompetitor').value}) })
-          .then(function(r) { return r.json(); })
-          .then(function(d) { btn.disabled=false; btn.textContent='分析定价'; resultEl.innerHTML = d.ok ? renderMD(d.content) : '<p style="color:var(--red)">'+d.error+'</p>'; })
-          .catch(function(e) { btn.disabled=false; btn.textContent='分析定价'; resultEl.innerHTML = '<p style="color:var(--red)">请求失败: '+e.message+'</p>'; });
+        var btn = this; btn.disabled = true; btn.textContent = '分析中...';
+        fetchStream('/api/operations/pricing-stream', {api_key:apiKey, product:product, cost:document.getElementById('pricingCost').value, platform:document.getElementById('pricingPlatform').value, competitors:document.getElementById('pricingCompetitor').value}, document.getElementById('pricingResult'), btn, '分析定价');
       });
 
       document.getElementById('pricingCompetitor').addEventListener('keydown', function(e) {

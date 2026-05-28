@@ -60,4 +60,41 @@ async function* deepseekStream(messages, apiKey = "") {
   }
 }
 
-export { deepseekStream };
+async function askAI(systemPrompt, userPrompt, apiKey = "") {
+  const messages = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userPrompt },
+  ];
+  let fullText = "";
+  for await (const chunk of deepseekStream(messages, apiKey)) {
+    if (chunk.content) fullText += chunk.content;
+  }
+  return fullText;
+}
+
+// SSE 流式输出到客户端，token 逐个推送
+async function streamSSE(systemPrompt, userPrompt, apiKey, res) {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+
+  try {
+    const messages = [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ];
+
+    for await (const chunk of deepseekStream(messages, apiKey)) {
+      if (chunk.content) {
+        res.write(`data: ${JSON.stringify({ token: chunk.content })}\n\n`);
+      }
+    }
+    res.write("data: [DONE]\n\n");
+  } catch (e) {
+    res.write(`data: ${JSON.stringify({ error: e.message })}\n\n`);
+  }
+  res.end();
+}
+
+export { deepseekStream, askAI, streamSSE };

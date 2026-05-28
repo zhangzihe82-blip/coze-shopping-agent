@@ -1,4 +1,4 @@
-import { deepseekStream } from "../llm/client.js";
+import { askAI } from "../llm/client.js";
 
 const PROMPT = `你是电商客服话术专家，精通各平台售后规则、差评处理、纠纷应对和客户关系维护。
 
@@ -31,6 +31,8 @@ const SCENE_HINTS = {
   askReview: "场景：买家已收货但未评价，需要引导给好评",
 };
 
+export { PROMPT as SERVICE_PROMPT };
+
 export async function getServiceReply(scene = "", context = "", apiKey = "") {
   if (!scene.trim()) {
     return { content: "请选择或描述客服场景，如：差评回复、退货纠纷、投诉处理、好评引导...", generatedAt: new Date().toISOString() };
@@ -43,14 +45,6 @@ export async function getServiceReply(scene = "", context = "", apiKey = "") {
     `请给出专业的客服回复话术和应对策略。`,
   ].filter(Boolean).join("\n");
 
-  const messages = [
-    { role: "system", content: PROMPT },
-    { role: "user", content: userPrompt },
-  ];
-
-  let fullText = "";
-  for await (const chunk of deepseekStream(messages, apiKey)) {
-    if (chunk.content) fullText += chunk.content;
-  }
-  return { content: fullText, scene, generatedAt: new Date().toISOString() };
+  const content = await askAI(PROMPT, userPrompt, apiKey);
+  return { content, scene, generatedAt: new Date().toISOString() };
 }

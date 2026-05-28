@@ -1,4 +1,4 @@
-import { deepseekStream } from "../llm/client.js";
+import { askAI } from "../llm/client.js";
 import { searchWeb } from "../search/webSearch.js";
 import { getPublishHistory } from "../xhs/publisher.js";
 
@@ -41,24 +41,14 @@ async function generateDailyReport(apiKey = "", customNotes = "") {
     customNotes ? `\n## 运营备注\n${customNotes}` : "",
   ].join("\n");
 
-  const messages = [
-    { role: "system", content: REPORT_PROMPT },
-    {
-      role: "user",
-      content: [
-        `请基于以下数据生成今日店铺运营总结：`,
-        dataSummary,
-        searchResult ? `\n## 今日市场动态\n${searchResult}` : "",
-      ].join("\n"),
-    },
-  ];
-
-  let fullText = "";
-  for await (const chunk of deepseekStream(messages, apiKey)) {
-    if (chunk.content) fullText += chunk.content;
-  }
+  const userPrompt = [
+    `请基于以下数据生成今日店铺运营总结：`,
+    dataSummary,
+    searchResult ? `\n## 今日市场动态\n${searchResult}` : "",
+  ].join("\n");
+  const content = await askAI(REPORT_PROMPT, userPrompt, apiKey);
   return {
-    content: fullText,
+    content,
     dataSource: {
       todayPublishes: todayPublishes.length,
       date: todayStr,

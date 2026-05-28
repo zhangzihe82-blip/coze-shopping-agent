@@ -1,4 +1,4 @@
-import { deepseekStream } from "../llm/client.js";
+import { askAI } from "../llm/client.js";
 
 const PROMPT = `你是电商内容营销专家，擅长短视频脚本、直播话术、小红书种草文案、商品详情页文案创作。
 
@@ -24,6 +24,8 @@ const PROMPT = `你是电商内容营销专家，擅长短视频脚本、直播�
 - 核心卖点提炼
 - 痛点-解决方案文案结构`;
 
+export { PROMPT as CONTENT_PROMPT };
+
 export async function generateContent(params = {}, apiKey = "") {
   const { product = "", platform = "抖音", audience = "", priceRange = "" } = params;
 
@@ -39,14 +41,6 @@ export async function generateContent(params = {}, apiKey = "") {
     `请为我生成完整的营销内容方案，要求口语化、有爆款潜质，直接可用。`,
   ].filter(Boolean).join("\n");
 
-  const messages = [
-    { role: "system", content: PROMPT },
-    { role: "user", content: userPrompt },
-  ];
-
-  let fullText = "";
-  for await (const chunk of deepseekStream(messages, apiKey)) {
-    if (chunk.content) fullText += chunk.content;
-  }
-  return { content: fullText, params, generatedAt: new Date().toISOString() };
+  const content = await askAI(PROMPT, userPrompt, apiKey);
+  return { content, params, generatedAt: new Date().toISOString() };
 }

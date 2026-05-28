@@ -1,4 +1,4 @@
-import { deepseekStream } from "../llm/client.js";
+import { askAI } from "../llm/client.js";
 
 const PROMPT = `你是电商平台规则分析师，精通淘宝、天猫、京东、拼多多、抖音电商、小红书等平台的规则体系。
 
@@ -21,16 +21,10 @@ const PROMPT = `你是电商平台规则分析师，精通淘宝、天猫、京�
 ## 🔮 近期预警
 即将生效但很多商家还没注意到的规则`;
 
+export { PROMPT as RULES_PROMPT };
+
 export async function monitorRules(platform = "", apiKey = "") {
   const platformHint = platform ? `重点关注平台：${platform}` : "关注所有主流平台（淘宝、京东、拼多多、抖音电商）";
-  const messages = [
-    { role: "system", content: PROMPT },
-    { role: "user", content: `请分析当前各电商平台的最新规则变动和应对策略。${platformHint}。请基于你最新的知识给出分析。` },
-  ];
-
-  let fullText = "";
-  for await (const chunk of deepseekStream(messages, apiKey)) {
-    if (chunk.content) fullText += chunk.content;
-  }
-  return { content: fullText, platform, generatedAt: new Date().toISOString() };
+  const content = await askAI(PROMPT, `请分析当前各电商平台的最新规则变动和应对策略。${platformHint}。请基于你最新的知识给出分析。`, apiKey);
+  return { content, platform, generatedAt: new Date().toISOString() };
 }

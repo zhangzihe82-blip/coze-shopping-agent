@@ -1,4 +1,4 @@
-import { deepseekStream } from "../llm/client.js";
+import { askAI } from "../llm/client.js";
 
 const PROMPT = `你是电商选品策略专家，擅长品类分析、利润测算和市场竞争评估。
 
@@ -26,6 +26,8 @@ const PROMPT = `你是电商选品策略专家，擅长品类分析、利润测�
 - 初期流量获取方式
 - 避坑提醒`;
 
+export { PROMPT as PICK_PROMPT };
+
 export async function recommendProduct(params = {}, apiKey = "") {
   const { budget = "1-5万", platform = "抖音", category = "" } = params;
   const now = new Date();
@@ -39,14 +41,6 @@ export async function recommendProduct(params = {}, apiKey = "") {
     `请根据以上条件，给出最适合的选品方向和具体运营建议。`,
   ].join("\n");
 
-  const messages = [
-    { role: "system", content: PROMPT },
-    { role: "user", content: userPrompt },
-  ];
-
-  let fullText = "";
-  for await (const chunk of deepseekStream(messages, apiKey)) {
-    if (chunk.content) fullText += chunk.content;
-  }
-  return { content: fullText, params, generatedAt: new Date().toISOString() };
+  const content = await askAI(PROMPT, userPrompt, apiKey);
+  return { content, params, generatedAt: new Date().toISOString() };
 }
