@@ -3,388 +3,469 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>小红书发布 — 灵犀导购</title>
+  <title>小红书发布 — 灵犀</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --accent: #FF2442;
-      --accent-hover: #E8203A;
-      --accent-light: #FFF0F3;
       --bg: #F5F5F7;
-      --surface: #FFFFFF;
-      --surface-secondary: #FAFAFA;
+      --bg-raised: #FAFAFA;
+      --bg-card: #FFFFFF;
+      --bg-hover: #F0F0F2;
+      --border: #E5E5EA;
+      --border-light: #F0F0F2;
       --text: #1D1D1F;
       --text-secondary: #6E6E73;
       --text-tertiary: #86868B;
-      --border: #D2D2D7;
-      --border-light: #E8E8ED;
-      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+      --accent: #FE2C55;
+      --accent-dim: rgba(254,44,85,0.08);
+      --accent-glow: rgba(254,44,85,0.15);
+      --success: #34C759;
+      --success-dim: rgba(52,199,89,0.10);
+      --danger: #FF3B30;
+      --danger-dim: rgba(255,59,48,0.08);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
       --shadow: 0 2px 12px rgba(0,0,0,0.06);
       --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
-      --radius: 20px;
-      --radius-sm: 14px;
-      --radius-xs: 10px;
-      --transition: 0.3s cubic-bezier(0.25,0.1,0.25,1);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --radius-xs: 6px;
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
     }
 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: 'Inter','Noto Sans SC',-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
+      font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+      letter-spacing: -0.01em;
     }
 
+    /* ─── Scrollbar ─── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #D2D2D7; border-radius: 3px; }
+
     /* ─── Nav ─── */
-    .navbar {
+    .nav {
+      position: sticky; top: 0; z-index: 100;
       background: rgba(255,255,255,0.72);
       backdrop-filter: saturate(180%) blur(20px);
       -webkit-backdrop-filter: saturate(180%) blur(20px);
       border-bottom: 1px solid rgba(0,0,0,0.06);
-      padding: 0 24px;
-      height: 52px;
-      display: flex;
-      align-items: center;
+      height: 48px; display: flex; align-items: center; padding: 0 28px;
       justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
     }
-    .nav-left { display: flex; align-items: center; gap: 24px; }
+    .nav-l { display: flex; align-items: center; gap: 18px; }
     .nav-brand {
-      display: flex; align-items: center; gap: 10px;
-      font-size: 17px; font-weight: 600; color: var(--text);
-      letter-spacing: -0.2px; text-decoration: none;
+      display: flex; align-items: center; gap: 9px; text-decoration: none;
+      font-size: 14px; font-weight: 600; color: var(--text); letter-spacing: -0.02em;
     }
-    .nav-back {
-      font-size: 13px; color: var(--accent); text-decoration: none;
-      font-weight: 500; display: flex; align-items: center; gap: 4px;
-    }
-    .nav-back:hover { text-decoration: underline; }
     .nav-logo {
-      width: 32px; height: 32px;
-      background: linear-gradient(135deg, #FF2442, #FF6B81);
-      border-radius: 9px; display: flex; align-items: center;
-      justify-content: center; font-size: 16px;
-    }
-
-    /* ─── Page Layout ─── */
-    .page { max-width: 900px; margin: 0 auto; padding: 32px 24px 60px; }
-    .page-header { margin-bottom: 28px; }
-    .page-header h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.4px; margin-bottom: 6px; }
-    .page-header p { font-size: 15px; color: var(--text-secondary); }
-
-    /* ─── Steps indicator ─── */
-    .steps { display: flex; gap: 0; margin-bottom: 32px; }
-    .step {
-      flex: 1; display: flex; align-items: center; gap: 8px;
-      padding: 10px 16px; font-size: 13px; font-weight: 500;
-      color: var(--text-tertiary); border-bottom: 2px solid var(--border-light);
-      transition: all var(--transition); cursor: pointer;
-    }
-    .step .step-num {
-      width: 24px; height: 24px; border-radius: 50%;
-      background: rgba(0,0,0,0.06); color: var(--text-tertiary);
+      width: 26px; height: 26px; border-radius: 7px; background: var(--accent);
       display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 600; transition: all var(--transition);
     }
-    .step.active { color: var(--accent); border-bottom-color: var(--accent); }
-    .step.active .step-num { background: var(--accent); color: #fff; }
-    .step.done { color: #34C759; border-bottom-color: #34C759; }
-    .step.done .step-num { background: #34C759; color: #fff; }
+    .nav-logo svg { width: 14px; height: 14px; }
+    .nav-back {
+      font-size: 12px; color: var(--text-secondary); text-decoration: none;
+      transition: color 0.2s; font-weight: 500;
+    }
+    .nav-back:hover { color: var(--accent); }
 
-    /* ─── Panel ─── */
-    .panel { display: none; animation: fadeUp 0.35s ease; }
+    /* ─── Page ─── */
+    .page { max-width: 760px; margin: 0 auto; padding: 60px 28px 120px; }
+
+    /* ─── Hero ─── */
+    .hero { margin-bottom: 56px; }
+    .hero-eyebrow {
+      font-size: 11px; font-weight: 600; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px;
+    }
+    .hero h1 {
+      font-size: 44px; font-weight: 700; letter-spacing: -0.03em;
+      line-height: 1.1; margin-bottom: 14px; color: var(--text);
+    }
+    .hero p {
+      font-size: 17px; color: var(--text-secondary); line-height: 1.55;
+      max-width: 480px; font-weight: 400;
+    }
+
+    /* ─── Section titles ─── */
+    .sec-label {
+      font-size: 10px; font-weight: 600; color: var(--text-tertiary);
+      text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 14px;
+    }
+
+    /* ─── Account bar ─── */
+    .acct-bar {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 20px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-bottom: 40px; box-shadow: var(--shadow-sm);
+    }
+    .acct-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+      background: var(--border); transition: background 0.4s;
+    }
+    .acct-dot.on { background: var(--success); box-shadow: 0 0 8px rgba(52,199,89,0.4); }
+    .acct-info { flex: 1; }
+    .acct-name { font-size: 13px; font-weight: 600; }
+    .acct-status { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+    .acct-acts { display: flex; gap: 8px; align-items: center; }
+
+    /* ─── Steps ─── */
+    .stepper {
+      display: flex; gap: 2px; margin-bottom: 48px;
+      background: var(--bg-raised); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 3px;
+    }
+    .step {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 9px 14px; border-radius: 7px; font-size: 12px; font-weight: 500;
+      color: var(--text-tertiary); cursor: pointer; transition: all 0.25s var(--ease-out);
+      border: 1px solid transparent; white-space: nowrap;
+    }
+    .step-num {
+      width: 20px; height: 20px; border-radius: 5px; font-size: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace; font-weight: 500;
+      background: var(--bg); color: var(--text-tertiary); transition: all 0.25s var(--ease-out);
+    }
+    .step.active { color: var(--text); background: var(--bg-card); border-color: var(--border); box-shadow: var(--shadow-sm); }
+    .step.active .step-num { background: var(--accent); color: #fff; }
+    .step.done { color: var(--success); }
+    .step.done .step-num { background: var(--success); color: #fff; }
+    .step:hover:not(.active):not(.done) { color: var(--text-secondary); background: var(--bg-hover); }
+
+    /* ─── Panels ─── */
+    .panel { display: none; animation: fadeIn 0.45s var(--ease-out); }
     .panel.active { display: block; }
 
-    /* ─── Upload Zone ─── */
-    .upload-zone {
+    /* ─── Upload ─── */
+    .drop-zone {
       border: 2px dashed var(--border); border-radius: var(--radius);
-      padding: 48px 24px; text-align: center; cursor: pointer;
-      transition: all var(--transition); background: var(--surface-secondary);
+      padding: 56px 32px; text-align: center; cursor: pointer;
+      transition: all 0.3s var(--ease-out); background: var(--bg-raised);
     }
-    .upload-zone:hover, .upload-zone.drag-over {
-      border-color: var(--accent); background: var(--accent-light);
-    }
-    .upload-zone svg { margin-bottom: 12px; opacity: 0.5; }
-    .upload-zone h3 { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
-    .upload-zone p { font-size: 13px; color: var(--text-tertiary); }
+    .drop-zone:hover { border-color: var(--accent); background: var(--accent-dim); }
+    .drop-zone.drag-over { border-color: var(--accent); background: var(--accent-glow); }
+    .drop-zone .dz-icon { margin-bottom: 14px; color: var(--text-tertiary); }
+    .drop-zone h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .drop-zone p { font-size: 12px; color: var(--text-tertiary); }
 
     .preview-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 10px; margin-top: 16px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 6px; margin-top: 14px;
     }
     .preview-item {
-      position: relative; border-radius: var(--radius-xs);
-      overflow: hidden; aspect-ratio: 1; background: #000;
+      position: relative; border-radius: var(--radius-sm); overflow: hidden;
+      aspect-ratio: 1; background: var(--bg-raised); border: 1px solid var(--border);
     }
-    .preview-item img, .preview-item video {
-      width: 100%; height: 100%; object-fit: cover;
-    }
-    .preview-item .remove-btn {
-      position: absolute; top: 6px; right: 6px;
-      width: 24px; height: 24px; border-radius: 50%;
-      background: rgba(0,0,0,0.55); color: #fff;
-      border: none; cursor: pointer; font-size: 12px;
+    .preview-item img, .preview-item video { width: 100%; height: 100%; object-fit: cover; }
+    .preview-item .rm-btn {
+      position: absolute; top: 5px; right: 5px; width: 20px; height: 20px;
+      border-radius: 5px; background: rgba(0,0,0,0.65); color: #fff;
+      border: none; cursor: pointer; font-size: 11px; line-height: 1;
       display: flex; align-items: center; justify-content: center;
     }
+    .preview-item .rm-btn:hover { background: var(--danger); }
 
     /* ─── Form ─── */
-    .form-group { margin-bottom: 18px; }
-    .form-label {
-      display: block; font-size: 13px; font-weight: 500;
-      color: var(--text); margin-bottom: 6px;
+    .field { margin-bottom: 22px; }
+    .field-lbl {
+      display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 7px;
     }
-    .form-hint { font-size: 12px; color: var(--text-tertiary); margin-bottom: 6px; }
-    .form-textarea {
-      width: 100%; min-height: 100px; padding: 12px 14px;
-      border: 1.5px solid var(--border-light); border-radius: var(--radius-xs);
-      font-size: 14px; font-family: inherit; line-height: 1.6;
-      color: var(--text); background: var(--surface); resize: vertical;
-      outline: none; transition: all var(--transition);
+    .field-hint { font-size: 11px; color: var(--text-tertiary); margin-bottom: 7px; }
+    .field-input {
+      width: 100%; height: 44px; padding: 0 14px; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); font-size: 13px; font-family: inherit;
+      color: var(--text); background: var(--bg-card); outline: none;
+      transition: all 0.2s var(--ease-out);
     }
-    .form-textarea:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(255,36,66,0.1);
+    .field-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+    .field-input::placeholder { color: var(--text-tertiary); }
+    .field-area {
+      width: 100%; min-height: 120px; padding: 12px 14px; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); font-size: 13px; font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      line-height: 1.7; color: var(--text); background: var(--bg-card); resize: vertical;
+      outline: none; transition: all 0.2s var(--ease-out);
     }
-    .form-input {
-      width: 100%; height: 42px; padding: 0 14px;
-      border: 1.5px solid var(--border-light); border-radius: var(--radius-xs);
-      font-size: 14px; font-family: inherit; color: var(--text);
-      background: var(--surface); outline: none; transition: all var(--transition);
-    }
-    .form-input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(255,36,66,0.1);
-    }
+    .field-area:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+    .field-area::placeholder { color: var(--text-tertiary); }
 
     /* ─── Buttons ─── */
     .btn {
-      height: 42px; padding: 0 22px; border-radius: 10px;
-      border: none; font-size: 14px; font-weight: 500;
-      font-family: inherit; cursor: pointer; transition: all var(--transition);
-      display: inline-flex; align-items: center; gap: 6px;
+      display: inline-flex; align-items: center; gap: 6px; height: 38px;
+      padding: 0 18px; border-radius: var(--radius-xs); font-size: 12px;
+      font-weight: 600; font-family: inherit; cursor: pointer; border: none;
+      transition: all 0.2s var(--ease-out); letter-spacing: -0.01em;
+      text-decoration: none; white-space: nowrap;
     }
-    .btn-primary {
-      background: var(--accent); color: #fff;
-      box-shadow: 0 2px 8px rgba(255,36,66,0.3);
+    .btn:active { transform: scale(0.975); }
+    .btn-pri { background: var(--accent); color: #fff; }
+    .btn-pri:hover { background: #E5254A; }
+    .btn-pri:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn-sec {
+      background: var(--bg-card); color: var(--text-secondary);
+      border: 1px solid var(--border);
     }
-    .btn-primary:hover { background: var(--accent-hover); transform: scale(1.02); }
-    .btn-primary:active { transform: scale(0.98); }
-    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-    .btn-secondary {
-      background: var(--surface); color: var(--text);
-      border: 1.5px solid var(--border);
+    .btn-sec:hover { border-color: var(--text-tertiary); color: var(--text); background: var(--bg-hover); }
+    .btn-ghost {
+      background: transparent; color: var(--text-secondary); padding: 0 10px;
     }
-    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-ghost:hover { color: var(--text); background: var(--bg-hover); }
+    .btn-danger {
+      background: var(--danger-dim); color: var(--danger);
+      border: 1px solid rgba(255,59,48,0.15);
+    }
+    .btn-danger:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+    .btn-sm { height: 30px; padding: 0 12px; font-size: 11px; }
+    .btn-xs { height: 26px; padding: 0 10px; font-size: 10px; border-radius: 4px; }
 
-    .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 24px; align-items: center; }
 
-    /* ─── Preview Card ─── */
-    .note-preview {
-      background: #FFF; border: 1px solid var(--border-light);
-      border-radius: var(--radius); overflow: hidden;
-      box-shadow: var(--shadow);
+    /* ─── Card ─── */
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm);
     }
-    .note-preview-header {
-      padding: 14px 18px; border-bottom: 1px solid var(--border-light);
-      font-size: 13px; font-weight: 500; color: var(--text-secondary);
+    .card-hd {
+      padding: 12px 18px; border-bottom: 1px solid var(--border);
+      font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+      text-transform: uppercase; letter-spacing: 0.06em;
       display: flex; align-items: center; gap: 6px;
+      background: var(--bg-raised);
     }
-    .note-preview-body { padding: 18px; }
-    .note-preview-title {
-      font-size: 18px; font-weight: 600; margin-bottom: 12px;
-      line-height: 1.4;
+    .card-bd { padding: 18px; }
+
+    /* ─── Preview card ─── */
+    .note-preview { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); }
+    .note-preview-header {
+      padding: 11px 16px; border-bottom: 1px solid var(--border); font-size: 11px;
+      font-weight: 600; color: var(--text-tertiary); text-transform: uppercase;
+      letter-spacing: 0.06em; background: var(--bg-raised);
     }
-    .note-preview-text {
-      font-size: 14px; line-height: 1.8; color: var(--text);
-      white-space: pre-wrap;
-    }
-    .note-preview-tags {
-      margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px;
-    }
+    .note-preview-body { padding: 16px; }
+    .note-preview-title { font-size: 17px; font-weight: 600; margin-bottom: 8px; line-height: 1.35; }
+    .note-preview-text { font-size: 13px; line-height: 1.75; color: var(--text-secondary); white-space: pre-wrap; }
+    .note-preview-tags { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 5px; }
     .note-tag {
-      font-size: 12px; color: var(--accent); background: var(--accent-light);
-      padding: 4px 10px; border-radius: 100px;
+      font-size: 10px; color: var(--accent); background: var(--accent-dim);
+      padding: 3px 9px; border-radius: 4px; font-weight: 500;
     }
+    .note-preview-images { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5px; }
+    .note-preview-images img { width: 100%; aspect-ratio: 1; object-fit: cover; }
 
-    .note-preview-images {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
-    }
-    .note-preview-images img {
-      width: 100%; aspect-ratio: 1; object-fit: cover;
-    }
-
-    /* ─── Status Badge ─── */
+    /* ─── Badge ─── */
     .badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      font-size: 12px; font-weight: 500; padding: 5px 10px;
-      border-radius: 100px;
+      display: inline-flex; align-items: center; gap: 4px; font-size: 10px;
+      font-weight: 500; padding: 3px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: 0.04em;
     }
-    .badge-ok { background: #E8F8EE; color: #34C759; }
-    .badge-warn { background: #FFF3E0; color: #FF9500; }
-    .badge-info { background: #E8F4FD; color: var(--accent); }
+    .badge-ok { background: var(--success-dim); color: var(--success); }
+    .badge-warn { background: var(--accent-dim); color: var(--accent); }
+    .badge-info { background: rgba(0,113,227,0.08); color: #0071E3; }
+    .badge-err { background: var(--danger-dim); color: var(--danger); }
 
-    /* ─── History Table ─── */
-    .history-table { width: 100%; border-collapse: collapse; }
-    .history-table th {
-      text-align: left; font-size: 12px; font-weight: 500;
-      color: var(--text-tertiary); padding: 10px 12px;
+    /* ─── History ─── */
+    .hist-table { width: 100%; border-collapse: collapse; }
+    .hist-table th {
+      text-align: left; font-size: 10px; font-weight: 600; color: var(--text-tertiary);
+      text-transform: uppercase; letter-spacing: 0.07em; padding: 10px 12px;
       border-bottom: 1px solid var(--border);
     }
-    .history-table td {
-      padding: 12px; font-size: 13px;
+    .hist-table td {
+      padding: 10px 12px; font-size: 12px; color: var(--text-secondary);
       border-bottom: 1px solid var(--border-light);
     }
+    .hist-table tbody tr { transition: background 0.15s; }
+    .hist-table tbody tr:hover { background: var(--bg-hover); }
 
-    /* ─── Account Card ─── */
-    .account-card {
-      display: flex; align-items: center; gap: 14px;
-      padding: 18px; background: var(--surface); border-radius: var(--radius);
-      border: 1px solid var(--border-light); box-shadow: var(--shadow-sm);
-    }
-    .account-avatar {
-      width: 52px; height: 52px; border-radius: 50%;
-      background: linear-gradient(135deg, #FF2442, #FF6B81);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px; flex-shrink: 0;
-    }
+    /* ─── Divider ─── */
+    hr.div { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
 
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(10px); }
+    /* ─── Modal ─── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 999;
+      background: rgba(0,0,0,0.35); align-items: center; justify-content: center;
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    }
+    .modal-box {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 30px; max-width: 500px;
+      width: 92%; max-height: 82vh; overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+    }
+    .modal-box h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+    .modal-box p { font-size: 12px; color: var(--text-secondary); margin-bottom: 18px; line-height: 1.6; }
+    .modal-box ol { font-size: 12px; color: var(--text-secondary); margin-bottom: 18px; line-height: 1.8; padding-left: 18px; }
+    .modal-box ol a { color: var(--accent); }
+
+    /* ─── Done state ─── */
+    .done-wrap { text-align: center; padding: 60px 0; }
+    .done-icon {
+      width: 64px; height: 64px; border-radius: 50%; background: var(--success-dim);
+      display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;
+    }
+    .done-wrap h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .done-wrap p { font-size: 14px; color: var(--text-secondary); }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
       to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
 
-  <nav class="navbar">
-    <div class="nav-left">
+  <nav class="nav">
+    <div class="nav-l">
       <a class="nav-brand" href="/">
-        <div class="nav-logo">📕</div>灵犀导购 · 小红书发布
+        <div class="nav-logo">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        灵犀 · 小红书发布
       </a>
       <a class="nav-back" href="/">← 返回导购</a>
     </div>
   </nav>
 
   <div class="page">
-    <div class="page-header">
-      <h1>小红书种草笔记发布</h1>
-      <p>上传素材 → AI生成文案 → 一键发布，全流程自动化</p>
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-eyebrow">Publishing Studio</div>
+      <h1>创建你的<br>小红书笔记</h1>
+      <p>上传素材，AI 生成文案，一键发布。简洁、高效、专注于内容本身。</p>
     </div>
 
-    <!-- Account Connect -->
-    <div class="account-card" id="accountCard" style="margin-bottom:24px;">
-      <div class="account-avatar" id="accountAvatar">📕</div>
-      <div style="flex:1;">
-        <div style="font-weight:600;font-size:15px;" id="accountName">未关联小红书账号</div>
-        <div style="font-size:13px;color:var(--text-tertiary);margin-top:4px;" id="accountStatus">发布前需先关联账号</div>
+    <!-- Account -->
+    <div class="acct-bar" id="accountCard">
+      <div class="acct-dot" id="acctDot"></div>
+      <div class="acct-info">
+        <div class="acct-name" id="accountName">未关联小红书账号</div>
+        <div class="acct-status" id="accountStatus">发布前需先关联账号</div>
       </div>
-      <button class="btn btn-primary" id="btnConnectAccount" style="height:34px;font-size:13px;padding:0 16px;">关联账号</button>
+      <div class="acct-acts">
+        <button class="btn btn-sec btn-sm" id="btnAutoConnect">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+          自动关联
+        </button>
+        <button class="btn btn-pri btn-sm" id="btnConnectAccount">关联账号</button>
+        <button class="btn btn-danger btn-sm" id="btnDisconnect" style="display:none;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          退出
+        </button>
+      </div>
     </div>
 
     <!-- Connect Modal -->
-    <div id="connectModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
-      <div style="background:#fff;border-radius:16px;padding:28px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;">
-        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px;">关联小红书账号</h3>
-        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
-          需要你的小红书创作者平台Cookie来完成自动发布。按以下步骤获取：
-        </p>
-        <ol style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;line-height:1.8;padding-left:18px;">
-          <li>用 <strong>Chrome/Edge 浏览器</strong>打开并登录 <a href="https://creator.xiaohongshu.com" target="_blank" style="color:var(--accent);">小红书创作服务平台</a></li>
-          <li>按 <strong>F12</strong> 打开开发者工具</li>
-          <li>点击 <strong>Application（应用程序）</strong> → <strong>Cookies</strong> → 选择 <strong>xiaohongshu.com</strong></li>
-          <li>在下方Cookie列表中任选一条，全选(Ctrl+A)→复制(Ctrl+C)所有Cookie</li>
-          <li>粘贴到下方输入框中</li>
+    <div class="modal-overlay" id="connectModal">
+      <div class="modal-box">
+        <h3>关联小红书账号</h3>
+        <p>需要你的小红书创作者平台 Cookie 来完成自动发布。</p>
+        <ol>
+          <li>用 Chrome/Edge 打开并登录 <a href="https://creator.xiaohongshu.com" target="_blank">小红书创作服务平台</a></li>
+          <li>按 <strong>F12</strong> → <strong>Application</strong> → <strong>Cookies</strong> → <strong>xiaohongshu.com</strong></li>
+          <li>任选一行，全选 (Ctrl+A) → 复制 (Ctrl+C)</li>
+          <li>粘贴到下方输入框</li>
         </ol>
-        <div class="form-group">
-          <label class="form-label">小红书昵称</label>
-          <input class="form-input" id="inputNickname" placeholder="你的小红书昵称（用于标识）" />
+        <div class="field">
+          <label class="field-lbl">小红书昵称</label>
+          <input class="field-input" id="inputNickname" placeholder="你的小红书昵称（用于标识）" />
         </div>
-        <div class="form-group">
-          <label class="form-label">Cookie 数据</label>
-          <p class="form-hint">从浏览器开发者工具中复制粘贴完整的Cookie数据</p>
-          <textarea class="form-textarea" id="inputCookies" style="min-height:100px;font-size:12px;font-family:monospace;"
-            placeholder="粘贴Cookie数据...&#10;例如: a1=xxxx; webId=xxxx; web_session=xxxx; ..."></textarea>
+        <div class="field">
+          <label class="field-lbl">Cookie 数据</label>
+          <p class="field-hint">从浏览器开发者工具中复制粘贴完整的 Cookie 数据</p>
+          <textarea class="field-area" id="inputCookies" style="min-height:90px;font-size:11px;font-family:'JetBrains Mono',monospace;"
+            placeholder="粘贴 Cookie 数据...&#10;例如: a1=xxxx; webId=xxxx; web_session=xxxx; ..."></textarea>
         </div>
         <div class="btn-row" style="justify-content:flex-end;">
-          <button class="btn btn-secondary" id="btnCancelConnect">取消</button>
-          <button class="btn btn-primary" id="btnSaveAccount">保存并关联</button>
+          <button class="btn btn-sec btn-sm" id="btnCancelConnect">取消</button>
+          <button class="btn btn-pri btn-sm" id="btnSaveAccount">保存并关联</button>
         </div>
       </div>
     </div>
 
-    <!-- Steps -->
-    <div class="steps">
+    <!-- Stepper -->
+    <div class="stepper">
       <div class="step active" data-step="1">
         <span class="step-num">1</span>上传素材
       </div>
       <div class="step" data-step="2">
-        <span class="step-num">2</span>AI生成文案
+        <span class="step-num">2</span>AI 生成文案
       </div>
       <div class="step" data-step="3">
         <span class="step-num">3</span>预览确认
       </div>
       <div class="step" data-step="4">
-        <span class="step-num">4</span>一键发布
+        <span class="step-num">4</span>发布
       </div>
     </div>
 
     <!-- Panel 1: Upload -->
     <div class="panel active" id="panelUpload">
-      <div class="form-group">
-        <label class="form-label">上传图片或视频</label>
-        <p class="form-hint">支持 JPG/PNG/GIF/WEBP/MP4，最多9个文件，单文件不超过50MB</p>
+      <div class="field">
+        <label class="field-lbl">上传素材</label>
+        <p class="field-hint">支持 JPG / PNG / GIF / WEBP / MP4，最多 9 个文件，单文件 ≤ 50 MB</p>
       </div>
-      <div class="upload-zone" id="uploadZone">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <h3>点击或拖拽上传素材</h3>
-        <p>上传商品图片/视频，AI将据此生成种草内容</p>
+      <div class="drop-zone" id="uploadZone">
+        <div class="dz-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <h3>拖拽文件到此处，或点击选择</h3>
+        <p>上传商品图片或视频，AI 将据此生成种草内容</p>
         <input type="file" id="fileInput" multiple accept="image/*,video/*" style="display:none" />
       </div>
       <div class="preview-grid" id="previewGrid"></div>
 
-      <div class="form-group" style="margin-top:18px;">
-        <label class="form-label">商品描述</label>
-        <p class="form-hint">告诉AI你想推广什么商品，描述越详细生成的文案越精准</p>
-        <textarea class="form-textarea" id="productDesc"
-          placeholder="例如：一款适合学生党的平价蓝牙耳机，售价199元，降噪效果好，续航30小时，有黑/白/粉三色可选，主打性价比和颜值..."
-        ></textarea>
+      <div class="field" style="margin-top:26px;">
+        <label class="field-lbl">商品描述</label>
+        <p class="field-hint">描述越详细，AI 生成的文案越精准</p>
+        <textarea class="field-area" id="productDesc" style="min-height:90px;font-family:'Inter','Noto Sans SC',sans-serif;"
+          placeholder="例如：一款适合学生党的平价蓝牙耳机，售价 199 元，降噪效果好，续航 30 小时，有黑/白/粉三色可选…"></textarea>
       </div>
 
-      <button class="btn btn-primary" id="btnGenCopy">
-        ✨ 生成种草文案
+      <button class="btn btn-pri" id="btnGenCopy" style="margin-top:4px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        生成种草文案
       </button>
     </div>
 
-    <!-- Panel 2: AI Copy Result -->
+    <!-- Panel 2: Copy Results -->
     <div class="panel" id="panelCopy">
       <div id="copyResults"></div>
       <div class="btn-row">
-        <button class="btn btn-secondary" id="btnRegenerate">🔄 换一批风格</button>
-        <button class="btn btn-primary" id="btnToPreview">→ 下一步：预览确认</button>
+        <button class="btn btn-sec btn-sm" id="btnRegenerate">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          换一批风格
+        </button>
+        <button class="btn btn-pri" id="btnToPreview">下一步：预览确认 →</button>
       </div>
     </div>
 
     <!-- Panel 3: Preview -->
     <div class="panel" id="panelPreview">
-      <div class="form-group">
-        <label class="form-label">笔记标题</label>
-        <input class="form-input" id="finalTitle" placeholder="笔记标题" />
+      <div class="field">
+        <label class="field-lbl">笔记标题</label>
+        <input class="field-input" id="finalTitle" placeholder="输入笔记标题" />
       </div>
-      <div class="form-group">
-        <label class="form-label">笔记正文</label>
-        <textarea class="form-textarea" id="finalBody" style="min-height:160px;"></textarea>
+      <div class="field">
+        <label class="field-lbl">笔记正文</label>
+        <textarea class="field-area" id="finalBody" style="min-height:160px;font-family:'Inter','Noto Sans SC',sans-serif;"></textarea>
       </div>
-      <div class="form-group">
-        <label class="form-label">话题标签</label>
-        <input class="form-input" id="finalTags" placeholder="#种草 #好物推荐" />
+      <div class="field">
+        <label class="field-lbl">话题标签</label>
+        <input class="field-input" id="finalTags" placeholder="#种草 #好物推荐" />
       </div>
-      <div class="note-preview" style="margin-bottom:16px;">
-        <div class="note-preview-header">📱 发布预览</div>
+
+      <div class="note-preview" style="margin-bottom:24px;">
+        <div class="note-preview-header">发布预览</div>
         <div class="note-preview-images" id="noteImages"></div>
         <div class="note-preview-body">
           <div class="note-preview-title" id="noteTitle"></div>
@@ -392,34 +473,46 @@
           <div class="note-preview-tags" id="noteTags"></div>
         </div>
       </div>
-      <button class="btn btn-primary" id="btnPublish">
-        🚀 一键发布到小红书
+
+      <button class="btn btn-pri" id="btnPublish" style="height:46px;padding:0 28px;font-size:13px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        一键发布到小红书
       </button>
     </div>
 
-    <!-- Panel 4: Published -->
+    <!-- Panel 4: Done -->
     <div class="panel" id="panelDone">
-      <div style="text-align:center;padding:40px 0;" id="doneContent">
-        <div style="font-size:56px;margin-bottom:16px;">🎉</div>
-        <h2>笔记已生成并提交发布</h2>
-        <p style="color:var(--text-secondary);margin-top:8px;" id="doneMsg"></p>
+      <div class="done-wrap" id="doneContent">
+        <div class="done-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2>笔记已提交发布</h2>
+        <p id="doneMsg"></p>
       </div>
       <div class="btn-row" style="justify-content:center;">
-        <button class="btn btn-secondary" id="btnNewPost">📝 发布新笔记</button>
-        <button class="btn btn-primary" id="btnViewHistory">📋 查看发布历史</button>
+        <button class="btn btn-sec" id="btnNewPost">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          发布新笔记
+        </button>
+        <button class="btn btn-pri" id="btnViewHistory">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+          查看发布历史
+        </button>
       </div>
     </div>
 
-    <!-- History Section -->
-    <div style="margin-top:48px;" id="historySection">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-        <h3 style="font-size:18px;font-weight:600;">📋 发布历史</h3>
-        <button class="btn btn-secondary" id="btnClearAll" style="height:34px;font-size:12px;padding:0 14px;color:#FF3B30;border-color:#FF3B30;display:none;">
-          🗑 一键清空
+    <!-- History -->
+    <hr class="div" />
+    <div id="historySection">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+        <div class="sec-label" style="margin-bottom:0;">发布历史</div>
+        <button class="btn btn-danger btn-xs" id="btnClearAll" style="display:none;">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          清空
         </button>
       </div>
       <div id="historyList">
-        <p style="color:var(--text-tertiary);font-size:14px;">暂无发布记录</p>
+        <p style="color:var(--text-tertiary);font-size:13px;">暂无发布记录</p>
       </div>
     </div>
   </div>
@@ -478,10 +571,10 @@
             (isVideo
               ? '<video src="' + f.url + '" muted></video>'
               : '<img src="' + f.url + '" alt="" />') +
-            '<button class="remove-btn" data-idx="' + i + '">&times;</button>' +
+            '<button class="rm-btn" data-idx="' + i + '">&times;</button>' +
             '</div>';
         }).join('');
-        previewGrid.querySelectorAll('.remove-btn').forEach(function(btn) {
+        previewGrid.querySelectorAll('.rm-btn').forEach(function(btn) {
           btn.addEventListener('click', function(e) {
             e.stopPropagation();
             uploadedFiles.splice(parseInt(this.dataset.idx), 1);
@@ -518,7 +611,7 @@
         if (!desc) { alert('请先输入商品描述'); return; }
 
         btnGenCopy.disabled = true;
-        btnGenCopy.textContent = '⏳ 正在生成文案...';
+        btnGenCopy.textContent = '生成中...';
 
         fetch('/api/xhs/generate-copy', {
           method: 'POST',
@@ -528,7 +621,7 @@
         .then(function(r) { return r.json(); })
         .then(function(d) {
           btnGenCopy.disabled = false;
-          btnGenCopy.textContent = '✨ 生成种草文案';
+          btnGenCopy.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 生成种草文案';
           if (d.ok) {
             currentVariants = d.variants;
             currentCopy = d.variants[0];
@@ -540,13 +633,13 @@
         })
         .catch(function(e) {
           btnGenCopy.disabled = false;
-          btnGenCopy.textContent = '✨ 生成种草文案';
+          btnGenCopy.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 生成种草文案';
           alert('请求失败: ' + e.message);
         });
       });
 
       function renderCopyResults() {
-        var html = '<h3 style="margin-bottom:14px;font-size:16px;">选择你喜欢的文案风格</h3>';
+        var html = '<div class="sec-label">选择文案风格</div>';
         var styleLabels = ['真实体验风', '干货测评风', '场景种草风'];
         currentVariants.forEach(function(v, i) {
           html += '<div class="note-preview" style="margin-bottom:14px;cursor:pointer;" data-vidx="' + i + '">' +
@@ -561,20 +654,18 @@
         });
         document.getElementById('copyResults').innerHTML = html;
 
-        // Select variant
         document.querySelectorAll('#copyResults .note-preview').forEach(function(el) {
           el.addEventListener('click', function() {
             var idx = parseInt(this.dataset.vidx);
             currentCopy = currentVariants[idx];
             document.querySelectorAll('#copyResults .note-preview').forEach(function(e) {
-              e.style.border = '1px solid var(--border-light)';
+              e.style.border = '1px solid var(--border)';
             });
-            this.style.border = '2px solid var(--accent)';
+            this.style.border = '1.5px solid var(--accent)';
           });
         });
-        // Auto-select first
         var first = document.querySelector('#copyResults .note-preview');
-        if (first) first.style.border = '2px solid var(--accent)';
+        if (first) first.style.border = '1.5px solid var(--accent)';
       }
 
       btnRegenerate.addEventListener('click', function() { btnGenCopy.click(); });
@@ -613,45 +704,6 @@
       document.getElementById('finalBody').addEventListener('input', updateNotePreview);
       document.getElementById('finalTags').addEventListener('input', updateNotePreview);
 
-      // ─── Publish ───
-      btnPublish.addEventListener('click', function() {
-        var title = document.getElementById('finalTitle').value.trim();
-        var body = document.getElementById('finalBody').value.trim();
-        var tags = document.getElementById('finalTags').value.trim();
-
-        if (!title || !body) { alert('标题和正文不能为空'); return; }
-
-        btnPublish.disabled = true;
-        btnPublish.textContent = '⏳ 发布中...';
-
-        fetch('/api/xhs/publish', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: title, body: body, tags: tags,
-            images: uploadedFiles.map(function(f) { return f.url; }),
-            api_key: apiKey
-          })
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          btnPublish.disabled = false;
-          btnPublish.textContent = '🚀 一键发布到小红书';
-          if (d.ok) {
-            document.getElementById('doneMsg').textContent = d.record.note;
-            goStep(4);
-            loadHistory();
-          } else {
-            alert('发布失败: ' + (d.error || '未知错误'));
-          }
-        })
-        .catch(function(e) {
-          btnPublish.disabled = false;
-          btnPublish.textContent = '🚀 一键发布到小红书';
-          alert('请求失败: ' + e.message);
-        });
-      });
-
       // ─── New Post ───
       btnNewPost.addEventListener('click', function() {
         uploadedFiles = []; currentCopy = null; currentVariants = null;
@@ -675,25 +727,24 @@
           .then(function(r) { return r.json(); })
           .then(function(d) {
             if (!d.history || d.history.length === 0) {
-              historyList.innerHTML = '<p style="color:var(--text-tertiary);font-size:14px;">暂无发布记录</p>';
+              historyList.innerHTML = '<p style="color:var(--text-tertiary);font-size:13px;">暂无发布记录</p>';
               btnClearAll.style.display = 'none';
               return;
             }
             btnClearAll.style.display = '';
-            historyList.innerHTML = '<table class="history-table"><thead><tr>' +
+            historyList.innerHTML = '<table class="hist-table"><thead><tr>' +
               '<th>标题</th><th>标签</th><th>时间</th><th>状态</th><th style="width:50px;"></th></tr></thead><tbody>' +
               d.history.map(function(h) {
                 return '<tr id="row-' + h.id + '">' +
-                  '<td><strong>' + h.title + '</strong></td>' +
-                  '<td>' + (h.tags||[]).map(function(t){return '<span class="note-tag" style="font-size:11px;">'+t+'</span>';}).join(' ') + '</td>' +
-                  '<td>' + new Date(h.createdAt).toLocaleString('zh-CN') + '</td>' +
-                  '<td><span class="badge ' + (h.status==='ready'?'badge-ok':'badge-info') + '">' + (h.status==='ready'?'待发布':'已记录') + '</span></td>' +
-                  '<td><button class="btn-del-row" data-id="' + h.id + '" title="删除此条" style="background:none;border:none;color:#FF3B30;cursor:pointer;font-size:16px;opacity:0.5;transition:all 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">&times;</button></td>' +
+                  '<td style="color:var(--text);">' + (h.title||'').substring(0,30) + '</td>' +
+                  '<td>' + (h.tags||[]).map(function(t){return '<span class="note-tag">'+t+'</span>';}).join(' ') + '</td>' +
+                  '<td style="font-size:11px;">' + new Date(h.createdAt).toLocaleString('zh-CN') + '</td>' +
+                  '<td><span class="badge ' + (h.status==='published'?'badge-ok':h.status==='failed'?'badge-err':'badge-warn') + '">' + h.status + '</span></td>' +
+                  '<td><button class="btn-del-row" data-id="' + h.id + '" title="删除" style="background:none;border:none;color:var(--text-tertiary);cursor:pointer;font-size:15px;opacity:0.4;transition:all 0.2s;" onmouseover="this.style.opacity=1;this.style.color='+"'var(--danger)'"+'" onmouseout="this.style.opacity=0.4;this.style.color='+"'var(--text-tertiary)'"+'">&times;</button></td>' +
                   '</tr>';
               }).join('') +
               '</tbody></table>';
 
-            // 单独删除
             historyList.querySelectorAll('.btn-del-row').forEach(function(btn) {
               btn.addEventListener('click', function() {
                 var id = this.dataset.id;
@@ -712,7 +763,6 @@
           });
       }
 
-      // 一键清空
       btnClearAll.addEventListener('click', function() {
         if (!confirm('确定清空全部发布历史吗？此操作不可撤销。')) return;
         fetch('/api/xhs/history', { method: 'DELETE' })
@@ -729,16 +779,68 @@
       // ─── Account Management ───
       var accountModal = document.getElementById('connectModal');
       var btnConnect = document.getElementById('btnConnectAccount');
+      var btnAutoConnect = document.getElementById('btnAutoConnect');
+      var btnDisconnect = document.getElementById('btnDisconnect');
       var btnCancelConnect = document.getElementById('btnCancelConnect');
       var btnSaveAccount = document.getElementById('btnSaveAccount');
       var inputNickname = document.getElementById('inputNickname');
       var inputCookies = document.getElementById('inputCookies');
       var accountName = document.getElementById('accountName');
       var accountStatus = document.getElementById('accountStatus');
-      var accountAvatar = document.getElementById('accountAvatar');
+      var acctDot = document.getElementById('acctDot');
 
       btnConnect.addEventListener('click', function() {
         accountModal.style.display = 'flex';
+      });
+
+      btnAutoConnect.addEventListener('click', function() {
+        btnAutoConnect.disabled = true;
+        btnAutoConnect.textContent = '检测中...';
+
+        fetch('/api/xhs/account/auto-connect', { method: 'POST' })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            btnAutoConnect.disabled = false;
+            btnAutoConnect.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg> 自动关联';
+            if (d.ok) {
+              updateAccountUI(d.account);
+              alert('自动关联成功！检测到账号：' + (d.account.nickname || '小红书创作者') + '\nCookie 数量：' + (d.account.cookieCount || 0));
+            } else if (d.needLogin) {
+              alert(d.message || '登录等待超时，请在浏览器窗口中完成登录后再次点击「自动关联」。');
+            } else {
+              alert('自动关联失败: ' + (d.error || '未知错误') + '\n\n请使用「关联账号」按钮手动粘贴 Cookie。');
+            }
+          })
+          .catch(function(e) {
+            btnAutoConnect.disabled = false;
+            btnAutoConnect.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg> 自动关联';
+            alert('请求超时，请确认浏览器窗口中的小红书已登录成功，然后再次点击「自动关联」。');
+          });
+      });
+
+      btnDisconnect.addEventListener('click', function() {
+        if (!confirm('确定要退出当前账号吗？\n\n退出后将删除 Cookie 和浏览器缓存，需要重新登录才能发布。')) return;
+
+        btnDisconnect.disabled = true;
+        btnDisconnect.textContent = '退出中...';
+
+        fetch('/api/xhs/account', { method: 'DELETE' })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            btnDisconnect.disabled = false;
+            btnDisconnect.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> 退出';
+            if (d.ok) {
+              updateAccountUI(null);
+              alert('已退出账号。');
+            } else {
+              alert('退出失败: ' + (d.error || '未知错误'));
+            }
+          })
+          .catch(function(e) {
+            btnDisconnect.disabled = false;
+            btnDisconnect.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> 退出';
+            alert('请求失败: ' + e.message);
+          });
       });
 
       btnCancelConnect.addEventListener('click', function() {
@@ -753,7 +855,7 @@
         var nickname = inputNickname.value.trim();
         var cookies = inputCookies.value.trim();
         if (!nickname) { alert('请输入小红书昵称'); return; }
-        if (!cookies) { alert('请粘贴Cookie数据'); return; }
+        if (!cookies) { alert('请粘贴 Cookie 数据'); return; }
 
         btnSaveAccount.disabled = true;
         btnSaveAccount.textContent = '保存中...';
@@ -770,7 +872,7 @@
           if (d.ok) {
             accountModal.style.display = 'none';
             updateAccountUI(d.account);
-            alert('账号关联成功！Cookie数量：' + (d.account.cookieCount || 0));
+            alert('账号关联成功！Cookie 数量：' + (d.account.cookieCount || 0));
           } else {
             alert('关联失败: ' + (d.error || '未知错误'));
           }
@@ -793,25 +895,26 @@
       function updateAccountUI(acc) {
         if (acc && acc.status === 'connected') {
           accountName.textContent = acc.nickname || '小红书创作者';
-          accountStatus.textContent = '已关联 · Cookie有效（' + (acc.cookieCount || 0) + '个）';
-          accountStatus.style.color = '#34C759';
-          accountAvatar.textContent = '✅';
-          accountAvatar.style.background = 'linear-gradient(135deg, #34C759, #30D158)';
+          accountStatus.textContent = '已关联 · Cookie 有效（' + (acc.cookieCount || 0) + ' 个）';
+          accountStatus.style.color = 'var(--success)';
+          acctDot.classList.add('on');
           btnConnect.textContent = '更换账号';
-          btnConnect.className = 'btn btn-secondary';
+          btnConnect.className = 'btn btn-sec btn-sm';
+          btnAutoConnect.style.display = 'none';
+          btnDisconnect.style.display = '';
         } else {
           accountName.textContent = '未关联小红书账号';
           accountStatus.textContent = '发布前需先关联账号';
           accountStatus.style.color = 'var(--text-tertiary)';
-          accountAvatar.textContent = '📕';
-          accountAvatar.style.background = 'linear-gradient(135deg, #FF2442, #FF6B81)';
+          acctDot.classList.remove('on');
           btnConnect.textContent = '关联账号';
-          btnConnect.className = 'btn btn-primary';
+          btnConnect.className = 'btn btn-pri btn-sm';
+          btnAutoConnect.style.display = '';
+          btnDisconnect.style.display = 'none';
         }
       }
 
       // Override publish to check account first
-      var origPublishClick = btnPublish.onclick;
       btnPublish.addEventListener('click', function(e) {
         var title = document.getElementById('finalTitle').value.trim();
         var body = document.getElementById('finalBody').value.trim();
@@ -820,9 +923,9 @@
         if (!title || !body) { alert('标题和正文不能为空'); return; }
 
         btnPublish.disabled = true;
-        btnPublish.textContent = '⏳ 发布中（浏览器自动化，约需15-30秒）...';
+        btnPublish.textContent = '发布中（浏览器自动化，约需 15-30 秒）...';
 
-        fetch('/api/xhs/publish', {
+        fetch('/api/xhs/publish-agent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -834,13 +937,13 @@
         .then(function(r) { return r.json(); })
         .then(function(d) {
           btnPublish.disabled = false;
-          btnPublish.textContent = '🚀 一键发布到小红书';
+          btnPublish.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg> 一键发布到小红书';
           if (d.ok) {
             document.getElementById('doneMsg').textContent = d.record.note;
             goStep(4);
             loadHistory();
           } else if (d.needAccount) {
-            alert('请先关联小红书账号（点击上方"关联账号"按钮）');
+            alert('请先关联小红书账号（点击上方「关联账号」按钮）');
             accountModal.style.display = 'flex';
           } else {
             alert('发布失败: ' + (d.error || '未知错误'));
@@ -848,7 +951,7 @@
         })
         .catch(function(e) {
           btnPublish.disabled = false;
-          btnPublish.textContent = '🚀 一键发布到小红书';
+          btnPublish.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg> 一键发布到小红书';
           alert('请求失败: ' + e.message);
         });
       });
@@ -860,34 +963,33 @@
           .then(function(r) { return r.json(); })
           .then(function(d) {
             if (!d.history || d.history.length === 0) {
-              historyList.innerHTML = '<p style="color:var(--text-tertiary);font-size:14px;">暂无发布记录</p>';
+              historyList.innerHTML = '<p style="color:var(--text-tertiary);font-size:13px;">暂无发布记录</p>';
               btnClearAll.style.display = 'none';
               return;
             }
             btnClearAll.style.display = '';
-            historyList.innerHTML = '<table class="history-table"><thead><tr>' +
-              '<th>标题</th><th>标签</th><th>时间</th><th>状态</th><th style="width:80px;">操作</th></tr></thead><tbody>' +
+            historyList.innerHTML = '<table class="hist-table"><thead><tr>' +
+              '<th>标题</th><th>标签</th><th>时间</th><th>状态</th><th style="width:90px;">操作</th></tr></thead><tbody>' +
               d.history.map(function(h) {
                 var statusBadge = h.status === 'published' ? '<span class="badge badge-ok">已发布</span>' :
                                   h.status === 'submitted' ? '<span class="badge badge-warn">已提交</span>' :
                                   h.status === 'publishing' ? '<span class="badge badge-info">发布中</span>' :
-                                  h.status === 'draft' ? '<span class="badge badge-warn">待手动发布</span>' :
-                                  '<span class="badge" style="background:#FFE5E5;color:#FF3B30;">失败</span>';
+                                  h.status === 'draft' ? '<span class="badge badge-warn">草稿</span>' :
+                                  '<span class="badge badge-err">失败</span>';
                 var retryBtn = (h.status === 'failed' || h.status === 'draft')
-                  ? '<button class="btn-retry" data-id="' + h.id + '" style="background:none;border:1px solid var(--accent);color:var(--accent);cursor:pointer;font-size:11px;padding:3px 8px;border-radius:6px;">重试</button>'
+                  ? '<button class="btn-retry" data-id="' + h.id + '" style="background:none;border:1px solid var(--accent);color:var(--accent);cursor:pointer;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:500;">重试</button>'
                   : '';
-                var delBtn = '<button class="btn-del-row" data-id="' + h.id + '" style="background:none;border:none;color:#FF3B30;cursor:pointer;font-size:16px;opacity:0.5;transition:all 0.2s;margin-left:4px;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">&times;</button>';
+                var delBtn = '<button class="btn-del-row" data-id="' + h.id + '" style="background:none;border:none;color:var(--text-tertiary);cursor:pointer;font-size:15px;opacity:0.4;transition:all 0.2s;margin-left:6px;" onmouseover="this.style.opacity=1;this.style.color='+"'var(--danger)'"+'" onmouseout="this.style.opacity=0.4;this.style.color='+"'var(--text-tertiary)'"+'">&times;</button>';
                 return '<tr id="row-' + h.id + '">' +
-                  '<td><strong>' + (h.title || '(无标题)').substring(0, 30) + '</strong></td>' +
-                  '<td>' + (h.tags||[]).map(function(t){return '<span class="note-tag" style="font-size:11px;">'+t+'</span>';}).join(' ') + '</td>' +
-                  '<td style="font-size:12px;">' + new Date(h.createdAt).toLocaleString('zh-CN') + '</td>' +
-                  '<td>' + statusBadge + (h.note ? '<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">' + h.note.substring(0, 40) + '</div>' : '') + '</td>' +
+                  '<td style="color:var(--text);">' + (h.title || '(无标题)').substring(0, 30) + '</td>' +
+                  '<td>' + (h.tags||[]).map(function(t){return '<span class="note-tag">'+t+'</span>';}).join(' ') + '</td>' +
+                  '<td style="font-size:11px;">' + new Date(h.createdAt).toLocaleString('zh-CN') + '</td>' +
+                  '<td>' + statusBadge + (h.note ? '<div style="font-size:10px;color:var(--text-tertiary);margin-top:3px;">' + h.note.substring(0, 40) + '</div>' : '') + '</td>' +
                   '<td style="white-space:nowrap;">' + retryBtn + delBtn + '</td>' +
                   '</tr>';
               }).join('') +
               '</tbody></table>';
 
-            // Bind retry buttons
             historyList.querySelectorAll('.btn-retry').forEach(function(btn) {
               btn.addEventListener('click', function() {
                 var id = this.dataset.id;
@@ -910,7 +1012,6 @@
               });
             });
 
-            // Bind delete buttons
             historyList.querySelectorAll('.btn-del-row').forEach(function(btn) {
               btn.addEventListener('click', function() {
                 var id = this.dataset.id;
