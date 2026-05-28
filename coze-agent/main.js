@@ -7,6 +7,7 @@ import settingsRouter from "./src/routes/settings.js";
 import xhsRouter from "./src/routes/xhs.js";
 import marketRouter from "./src/routes/market.js";
 import qaRouter from "./src/routes/qa.js";
+import operationsRouter from "./src/routes/operations.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -21,6 +22,7 @@ app.use("/api", settingsRouter);
 app.use("/api", xhsRouter);
 app.use("/api", marketRouter);
 app.use("/api", qaRouter);
+app.use("/api", operationsRouter);
 
 // 页面路由
 app.get("/xhs", (req, res) => {
