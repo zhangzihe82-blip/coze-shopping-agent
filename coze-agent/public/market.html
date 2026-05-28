@@ -253,7 +253,7 @@
       <a class="nav-brand" href="/">
         <div class="nav-logo">📊</div>灵犀市场洞察
       </a>
-      <a class="nav-link" href="/market.html">📡 市场情报</a>
+      <a class="nav-link" href="/">🏠 运营中心</a>
       <a class="nav-link" href="http://localhost:5001" target="_blank">🛍 导购助手</a>
       <a class="nav-link" href="/xhs">📕 小红书发布</a>
     </div>
@@ -266,170 +266,140 @@
 
   <div class="page">
     <div class="page-header">
-      <h1>电商智能运营中心</h1>
-      <p>AI驱动的市场监测、竞品分析与每日总结，让数据告诉你今天该做什么</p>
+      <h1>市场情报中心</h1>
+      <p>实时市场趋势、竞品分析、平台规则监控与每日运营总结</p>
     </div>
 
-    <!-- 实时新闻简报（瀑布流） -->
-    <div class="news-feed" id="newsFeed">
-      <div class="news-feed-header">
-        <h3><span class="live-dot"></span> 实时电商动态 · 瀑布流</h3>
-        <button class="news-refresh" id="btnNewsRefresh" onclick="loadNewsFeed()">刷新</button>
-      </div>
-      <div class="news-tabs" id="newsTabs"></div>
-      <div class="news-timeline" id="newsTimeline">
-        <div class="news-loading"><span></span><span></span><span></span></div>
-      </div>
-    </div>
-
-    <!-- 第二行：运营工具 -->
-    <div class="section-divider">
-      <span class="section-label">🛠️ 运营工具</span>
+    <!-- 第一行：市场情报 -->
+    <div class="section-divider" style="margin-top:28px;">
+      <span class="section-label">📡 市场情报</span>
     </div>
     <div class="cards-grid" style="grid-template-columns:repeat(5, 1fr);">
-      <div class="card" data-panel="qa">
-        <div class="card-icon">💬</div>
-        <h3>运营问答</h3>
-        <p>商品定位、平台规则、营销策略，有问必答</p>
-        <span class="card-badge badge-accent">专家在线</span>
+      <div class="card" data-panel="trends">
+        <div class="card-icon">📈</div>
+        <h3>市场趋势</h3>
+        <p>一键获取当前热销品类、分平台爆款趋势</p>
+        <span class="card-badge badge-accent">实时数据</span>
       </div>
-      <div class="card" data-panel="productPick">
-        <div class="card-icon">🎯</div>
-        <h3>选品推荐</h3>
-        <p>基于预算和平台，给出现象级选品方向和利润测算</p>
-        <span class="card-badge badge-accent">科学选品</span>
+      <div class="card" data-panel="policyNews">
+        <div class="card-icon">🔍</div>
+        <h3>政策新闻</h3>
+        <p>搜索关键词相关的政府政策、法规和行业动态</p>
+        <span class="card-badge badge-red">权威来源</span>
       </div>
-      <div class="card" data-panel="contentGen">
-        <div class="card-icon">🎬</div>
-        <h3>内容生成</h3>
-        <p>短视频脚本、直播话术、小红书文案一键生成</p>
-        <span class="card-badge badge-purple">爆款内容</span>
+      <div class="card" data-panel="competitors">
+        <div class="card-icon">👥</div>
+        <h3>竞品分析</h3>
+        <p>监测竞争对手的定价策略、营销打法和产品布局</p>
+        <span class="card-badge badge-purple">情报收集</span>
       </div>
-      <div class="card" data-panel="serviceReply">
-        <div class="card-icon">💬</div>
-        <h3>客服话术</h3>
-        <p>差评回复、纠纷应对、好评引导话术模板</p>
-        <span class="card-badge badge-accent">专业回复</span>
+      <div class="card" data-panel="ruleMonitor">
+        <div class="card-icon">⚖️</div>
+        <h3>规则变动</h3>
+        <p>各平台最新规则解读、影响分析和应对策略</p>
+        <span class="card-badge badge-red">及时预警</span>
       </div>
-      <div class="card" data-panel="pricingStrategy">
-        <div class="card-icon">💰</div>
-        <h3>定价策略</h3>
-        <p>成本核算、竞品比价、促销定价全链路分析</p>
-        <span class="card-badge badge-purple">利润最大化</span>
+      <div class="card" data-panel="dailyReport">
+        <div class="card-icon">📋</div>
+        <h3>每日总结</h3>
+        <p>自动生成店铺运营日报，复盘今日、规划明日</p>
+        <span class="card-badge badge-purple">智能报告</span>
       </div>
     </div>
 
     <!-- Result Panels -->
-    <div class="result-panel" id="panelQa">
+    <div class="result-panel" id="panelTrends">
       <div class="result-header">
-        <h2>💬 运营问答</h2>
+        <h2>📈 市场热销趋势</h2>
         <button class="result-close">&times;</button>
       </div>
       <div class="result-body">
-        <h4 style="font-size:15px;font-weight:600;margin-bottom:6px;">向电商运营专家提问</h4>
-        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">商品定位、平台规则、营销策略、定价分析……直接提问即可获得专业解答</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <h4 style="font-size:15px;font-weight:600;margin-bottom:2px;">一键获取当前市场热销情报</h4>
+            <p style="font-size:12px;color:var(--text-secondary);">看看现在市面上什么品类卖得最好，数据分平台呈现</p>
+          </div>
+          <button class="btn btn-primary" id="btnTrends">获取趋势</button>
+        </div>
+        <div id="trendsResult" style="margin-top:16px;"></div>
+      </div>
+    </div>
+
+    <div class="result-panel" id="panelPolicyNews">
+      <div class="result-header">
+        <h2>🔍 政策 & 新闻搜索</h2>
+        <button class="result-close">&times;</button>
+      </div>
+      <div class="result-body">
+        <h4 style="font-size:15px;font-weight:600;margin-bottom:6px;">搜索政策法规与行业新闻</h4>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">输入关键词，整理相关的政府政策、法规和行业动态</p>
         <div class="input-row">
-          <input class="input-field" id="qaQuestion" placeholder="输入你的问题，如：拼多多新店如何获取第一波流量？" />
-          <button class="btn btn-primary" id="btnQa">提问</button>
+          <input class="input-field" id="policyKeyword" placeholder="输入关键词，如：跨境电商、直播带货、AI..." />
+          <button class="btn btn-primary" id="btnPolicyNews">搜索</button>
         </div>
-        <div id="qaResult" style="margin-top:16px;"></div>
+        <div id="policyResult" style="margin-top:16px;"></div>
       </div>
     </div>
 
-
-    <div class="result-panel" id="panelProductPick">
+    <div class="result-panel" id="panelCompetitors">
       <div class="result-header">
-        <h2>🎯 选品推荐</h2>
+        <h2>👥 竞品分析</h2>
         <button class="result-close">&times;</button>
       </div>
       <div class="result-body">
-        <h4 style="font-size:15px;font-weight:600;margin-bottom:6px;">智能选品分析</h4>
-        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">输入预算和偏好，给出最优选品方向和利润测算</p>
-        <div class="input-row" style="flex-wrap:wrap;">
-          <input class="input-field" id="pickBudget" placeholder="预算（如：1-5万）" style="flex:1;min-width:120px;" />
-          <select class="input-field" id="pickPlatform" style="width:120px;height:40px;">
-            <option value="抖音">抖音</option>
-            <option value="淘宝">淘宝</option>
-            <option value="拼多多">拼多多</option>
-            <option value="京东">京东</option>
-            <option value="小红书">小红书</option>
-          </select>
-          <input class="input-field" id="pickCategory" placeholder="偏好品类（可选）" style="flex:1;min-width:120px;" />
-          <button class="btn btn-primary" id="btnProductPick">推荐选品</button>
+        <div class="input-row">
+          <input class="input-field" id="compCategory" placeholder="要分析的品类，如：蓝牙耳机、护肤品" />
+          <button class="btn btn-primary" id="btnCompetitors">开始分析</button>
         </div>
-        <div id="pickResult" style="margin-top:16px;"></div>
+        <div id="compResult" style="margin-top:16px;"></div>
       </div>
     </div>
 
-    <div class="result-panel" id="panelContentGen">
+    <div class="result-panel" id="panelDailyReport">
       <div class="result-header">
-        <h2>🎬 爆款内容生成</h2>
+        <h2>📋 每日运营总结</h2>
         <button class="result-close">&times;</button>
       </div>
       <div class="result-body">
-        <h4 style="font-size:15px;font-weight:600;margin-bottom:6px;">短视频脚本 / 直播话术 / 小红书文案</h4>
-        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">输入商品信息和目标人群，一键生成可直接使用的营销内容</p>
-        <div class="input-row" style="flex-wrap:wrap;">
-          <input class="input-field" id="contentProduct" placeholder="商品描述（如：39元保温杯）" style="flex:1;min-width:140px;" />
-          <select class="input-field" id="contentPlatform" style="width:110px;height:40px;">
-            <option value="抖音">抖音</option>
-            <option value="小红书">小红书</option>
-            <option value="淘宝">淘宝</option>
-          </select>
-          <input class="input-field" id="contentAudience" placeholder="目标人群（如：宝妈）" style="flex:1;min-width:120px;" />
-          <button class="btn btn-primary" id="btnContentGen">生成内容</button>
+        <div class="input-row">
+          <input class="input-field" id="reportNotes" placeholder="今日运营备注（可选）" />
+          <button class="btn btn-primary" id="btnDailyReport">生成报告</button>
         </div>
-        <div id="contentResult" style="margin-top:16px;"></div>
+        <div id="drResult" style="margin-top:16px;"></div>
       </div>
     </div>
 
-    <div class="result-panel" id="panelServiceReply">
+
+    <div class="result-panel" id="panelRuleMonitor">
       <div class="result-header">
-        <h2>💬 客服话术</h2>
+        <h2>⚖️ 平台规则变动</h2>
         <button class="result-close">&times;</button>
       </div>
       <div class="result-body">
-        <h4 style="font-size:15px;font-weight:600;margin-bottom:6px;">差评回复 / 纠纷应对 / 好评引导</h4>
-        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">选择场景，输入具体情况，获取专业客服回复模板</p>
-        <div class="input-row" style="flex-wrap:wrap;">
-          <select class="input-field" id="serviceScene" style="width:160px;height:40px;">
-            <option value="">选择场景...</option>
-            <option value="badReview">差评回复</option>
-            <option value="refund">退货退款纠纷</option>
-            <option value="complaint">投诉处理</option>
-            <option value="askReview">引导好评</option>
-          </select>
-          <input class="input-field" id="serviceContext" placeholder="补充具体情况（如：买家说颜色和图片不符）" style="flex:1;min-width:200px;" />
-          <button class="btn btn-primary" id="btnServiceReply">获取话术</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <h4 style="font-size:15px;font-weight:600;margin-bottom:2px;">各平台规则变动监控</h4>
+            <p style="font-size:12px;color:var(--text-secondary);">最新规则解读、影响分析、应对策略</p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <select class="input-field" id="rulePlatform" style="width:140px;height:40px;">
+              <option value="">全部平台</option>
+              <option value="淘宝">淘宝</option>
+              <option value="京东">京东</option>
+              <option value="拼多多">拼多多</option>
+              <option value="抖音">抖音电商</option>
+              <option value="小红书">小红书</option>
+            </select>
+            <button class="btn btn-primary" id="btnRuleMonitor">查询变动</button>
+          </div>
         </div>
-        <div id="serviceResult" style="margin-top:16px;"></div>
+        <div id="ruleResult" style="margin-top:16px;"></div>
       </div>
     </div>
 
-    <div class="result-panel" id="panelPricing">
-      <div class="result-header">
-        <h2>💰 定价策略</h2>
-        <button class="result-close">&times;</button>
-      </div>
-      <div class="result-body">
-        <h4 style="font-size:15px;font-weight:600;margin-bottom:6px;">科学定价分析</h4>
-        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">输入成本和竞品信息，获取定价方案、促销节奏和利润优化策略</p>
-        <div class="input-row" style="flex-wrap:wrap;">
-          <input class="input-field" id="pricingProduct" placeholder="商品名称" style="flex:1;min-width:120px;" />
-          <input class="input-field" id="pricingCost" placeholder="成本（如：含运费35元）" style="flex:1;min-width:140px;" />
-          <select class="input-field" id="pricingPlatform" style="width:110px;height:40px;">
-            <option value="">选择平台</option>
-            <option value="抖音">抖音</option>
-            <option value="淘宝">淘宝</option>
-            <option value="拼多多">拼多多</option>
-            <option value="京东">京东</option>
-          </select>
-          <input class="input-field" id="pricingCompetitor" placeholder="竞品参考价（可选）" style="flex:1;min-width:140px;" />
-          <button class="btn btn-primary" id="btnPricing">分析定价</button>
-        </div>
-        <div id="pricingResult" style="margin-top:16px;"></div>
-      </div>
-    </div>
+
+
+
   </div>
 
   <!-- Settings Overlay -->
@@ -463,80 +433,6 @@
       let apiKey = '';
       try { apiKey = localStorage.getItem('deepseek_api_key') || ''; } catch(e) {}
 
-      // ─── News Feed Waterfall (auto-load) ───
-      var platformClassMap = { '抖音':'platform-douyin','淘宝':'platform-taobao','天猫':'platform-taobao','京东':'platform-jd','拼多多':'platform-pdd','小红书':'platform-xhs' };
-      function getPlatformClass(p) { return platformClassMap[p] || 'platform-other'; }
-
-      var allNewsItems = [];
-      var currentNewsPlatform = '全部';
-
-      function renderNewsItem(item) {
-        return '<div class="news-item">' +
-          '<div class="news-item-top">' +
-            '<span class="news-platform '+getPlatformClass(item.platform)+'">'+item.platform+'</span>' +
-            '<span class="news-category">'+item.category+'</span>' +
-            '<span class="news-time">'+item.time+'</span>' +
-          '</div>' +
-          '<div class="news-title">'+item.title+'</div>' +
-          '<div class="news-summary">'+item.summary+'</div>' +
-          '<div class="news-impact">影响: '+item.impact+'</div>' +
-        '</div>';
-      }
-
-      function buildNewsTabs(items) {
-        var countMap = {};
-        var order = [];
-        items.forEach(function(item) {
-          var p = item.platform || '综合';
-          if (!countMap[p]) { countMap[p] = 0; order.push(p); }
-          countMap[p]++;
-        });
-        var tabs = [{ label: '全部', count: items.length, platform: '全部' }];
-        order.forEach(function(p) {
-          tabs.push({ label: p, count: countMap[p], platform: p });
-        });
-        var html = '';
-        tabs.forEach(function(t) {
-          var active = t.platform === currentNewsPlatform ? ' active' : '';
-          html += '<button class="news-tab'+active+'" data-platform="'+t.platform+'" onclick="switchNewsPlatform(\''+t.platform+'\')">'+t.label+'<span class="tab-count">'+t.count+'</span></button>';
-        });
-        document.getElementById('newsTabs').innerHTML = html;
-      }
-
-      function switchNewsPlatform(platform) {
-        currentNewsPlatform = platform;
-        var items = platform === '全部' ? allNewsItems : allNewsItems.filter(function(item) {
-          return (item.platform || '综合') === platform;
-        });
-        var tl = document.getElementById('newsTimeline');
-        tl.innerHTML = items.map(renderNewsItem).join('');
-        buildNewsTabs(allNewsItems);
-      }
-
-      window.loadNewsFeed = function() {
-        var tl = document.getElementById('newsTimeline');
-        var btn = document.getElementById('btnNewsRefresh');
-        document.getElementById('newsTabs').innerHTML = '';
-        tl.innerHTML = '<div class="news-loading"><span></span><span></span><span></span></div>';
-        btn.disabled = true; btn.textContent = '加载中...';
-        fetch('/api/news/feed', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:apiKey}) })
-          .then(function(r) { return r.json(); })
-          .then(function(d) {
-            btn.disabled = false; btn.textContent = '刷新';
-            if (!d.ok) { tl.innerHTML = '<div class="news-empty">加载失败: '+d.error+'</div>'; document.getElementById('newsTabs').innerHTML = ''; return; }
-            if (!d.items || !d.items.length) { tl.innerHTML = '<div class="news-empty">暂无最新动态，请稍后刷新</div>'; document.getElementById('newsTabs').innerHTML = ''; return; }
-            allNewsItems = d.items;
-            currentNewsPlatform = '全部';
-            buildNewsTabs(allNewsItems);
-            tl.innerHTML = allNewsItems.map(renderNewsItem).join('');
-          })
-          .catch(function(e) {
-            btn.disabled = false; btn.textContent = '刷新';
-            tl.innerHTML = '<div class="news-empty">网络请求失败: '+e.message+'</div>';
-          });
-      };
-      // 页面打开自动加载
-      loadNewsFeed();
 
       // ─── Settings ───
       const btnSettings = document.getElementById('btnSettings');
@@ -584,7 +480,7 @@
       document.addEventListener('keydown', function(e) { if (e.key==='Escape' && !settingsOverlay.classList.contains('hidden')) settingsOverlay.classList.add('hidden'); });
 
       // ─── Panel Toggle ───
-      var panels = { qa: 'panelQa', productPick: 'panelProductPick', contentGen: 'panelContentGen', serviceReply: 'panelServiceReply', pricingStrategy: 'panelPricing' };
+      var panels = { trends: 'panelTrends', policyNews: 'panelPolicyNews', competitors: 'panelCompetitors', ruleMonitor: 'panelRuleMonitor', dailyReport: 'panelDailyReport' };
 
       document.querySelectorAll('.card').forEach(function(card) {
         card.addEventListener('click', function() {
@@ -599,6 +495,76 @@
 
       document.querySelectorAll('.result-close').forEach(function(btn) {
         btn.addEventListener('click', function() { this.closest('.result-panel').classList.remove('visible'); });
+      });
+
+      // ─── Market API Helpers ───
+      function renderMD(text) {
+        if (!text) return '';
+        var html = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+          .replace(/```(\w*)\n([\s\S]*?)```/g,'<pre><code>$2</code></pre>').replace(/`([^`]+)`/g,'<code>$1</code>')
+          .replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')
+          .replace(/^#### (.+)$/gm,'<h4>$1</h4>').replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^# (.+)$/gm,'<h1>$1</h1>')
+          .replace(/^---$/gm,'<hr>').replace(/^&gt; (.+)$/gm,'<blockquote>$1</blockquote>')
+          .replace(/\|(.+)\|/g,function(m){if(m.indexOf('---')>-1)return'';return'<tr>'+m.split('|').filter(Boolean).map(function(c){return (m.match(/^.+?\|/)?'<td>':'<th>')+c.trim()+(m.match(/^.+?\|/)?'</td>':'</th>');}).join('')+'</tr>';})
+          .replace(/^[\s]*[-*] (.+)$/gm,'<li>$1</li>').replace(/^[\s]*\d+\. (.+)$/gm,'<li>$1</li>')
+          .replace(/\n{2,}/g,'</p><p>').replace(/\n/g,'<br>');
+        html = html.replace(/((?:<li>.*?<\/li><br>?)+)/g,'<ul>$1</ul>').replace(/<\/li><br><li>/g,'</li><li>').replace(/<\/ul><br>/g,'</ul>');
+        return '<p>'+html+'</p>';
+      }
+
+      // ─── Market Trends (one-click) ───
+      document.getElementById('btnTrends').addEventListener('click', function() {
+        var btn = this;
+        btn.disabled = true; btn.textContent = '分析中...';
+        var resultEl = document.getElementById('trendsResult');
+        resultEl.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+        fetch('/api/market/trends', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:apiKey}) })
+          .then(function(r) { return r.json(); })
+          .then(function(d) { btn.disabled=false; btn.textContent='获取趋势'; resultEl.innerHTML = d.ok ? renderMD(d.content) : '<p style="color:var(--red)">'+d.error+'</p>'; })
+          .catch(function(e) { btn.disabled=false; btn.textContent='获取趋势'; resultEl.innerHTML = '<p style="color:var(--red)">请求失败: '+e.message+'</p>'; });
+      });
+
+      // ─── Policy & News Search ───
+      document.getElementById('btnPolicyNews').addEventListener('click', function() {
+        var keyword = document.getElementById('policyKeyword').value.trim();
+        if (!keyword) { alert('请输入搜索关键词'); return; }
+        var btn = this;
+        btn.disabled = true; btn.textContent = '搜索中...';
+        var resultEl = document.getElementById('policyResult');
+        resultEl.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+        fetch('/api/market/policy-news', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:apiKey, keyword:keyword}) })
+          .then(function(r) { return r.json(); })
+          .then(function(d) { btn.disabled=false; btn.textContent='搜索'; resultEl.innerHTML = d.ok ? renderMD(d.content) : '<p style="color:var(--red)">'+d.error+'</p>'; })
+          .catch(function(e) { btn.disabled=false; btn.textContent='搜索'; resultEl.innerHTML = '<p style="color:var(--red)">请求失败: '+e.message+'</p>'; });
+      });
+
+      // Enter key triggers policy search
+      document.getElementById('policyKeyword').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('btnPolicyNews').click();
+      });
+
+      // ─── Competitors ───
+      document.getElementById('btnCompetitors').addEventListener('click', function() {
+        var btn = this;
+        btn.disabled = true; btn.textContent = '分析中...';
+        var resultEl = document.getElementById('compResult');
+        resultEl.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+        fetch('/api/market/competitors', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:apiKey, category:document.getElementById('compCategory').value.trim()}) })
+          .then(function(r) { return r.json(); })
+          .then(function(d) { btn.disabled=false; btn.textContent='开始分析'; resultEl.innerHTML = d.ok ? renderMD(d.content) : '<p style="color:var(--red)">'+d.error+'</p>'; })
+          .catch(function(e) { btn.disabled=false; btn.textContent='开始分析'; resultEl.innerHTML = '<p style="color:var(--red)">请求失败: '+e.message+'</p>'; });
+      });
+
+      // ─── Daily Report ───
+      document.getElementById('btnDailyReport').addEventListener('click', function() {
+        var btn = this;
+        btn.disabled = true; btn.textContent = '生成中...';
+        var resultEl = document.getElementById('drResult');
+        resultEl.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+        fetch('/api/market/daily-report', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:apiKey, notes:document.getElementById('reportNotes').value.trim()}) })
+          .then(function(r) { return r.json(); })
+          .then(function(d) { btn.disabled=false; btn.textContent='生成报告'; resultEl.innerHTML = d.ok ? renderMD(d.content) : '<p style="color:var(--red)">'+d.error+'</p>'; })
+          .catch(function(e) { btn.disabled=false; btn.textContent='生成报告'; resultEl.innerHTML = '<p style="color:var(--red)">请求失败: '+e.message+'</p>'; });
       });
 
       // ─── Streaming helper (通用流式渲染) ───
@@ -644,64 +610,6 @@
           .catch(function(e) { btn.disabled=false; btn.textContent=btnLabel; resultEl.innerHTML = '<p style="color:var(--red)">'+e.message+'</p>'; });
       }
 
-      // ─── Q&A (流式打字机效果) ───
-      document.getElementById('btnQa').addEventListener('click', function() {
-        var question = document.getElementById('qaQuestion').value.trim();
-        if (!question) { alert('请输入你的问题'); return; }
-        var btn = this; btn.disabled = true; btn.textContent = '思考中...';
-        fetchStream('/api/qa/ask-stream', {api_key:apiKey, question:question}, document.getElementById('qaResult'), btn, '提问');
-      });
-
-      document.getElementById('qaQuestion').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') document.getElementById('btnQa').click();
-      });
-
-
-      // ─── Product Pick (流式) ───
-      document.getElementById('btnProductPick').addEventListener('click', function() {
-        var btn = this; btn.disabled = true; btn.textContent = '分析中...';
-        fetchStream('/api/operations/pick-stream', {api_key:apiKey, budget:document.getElementById('pickBudget').value, platform:document.getElementById('pickPlatform').value, category:document.getElementById('pickCategory').value}, document.getElementById('pickResult'), btn, '推荐选品');
-      });
-
-      document.getElementById('pickCategory').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') document.getElementById('btnProductPick').click();
-      });
-
-      // ─── Content Generation (流式) ───
-      document.getElementById('btnContentGen').addEventListener('click', function() {
-        var product = document.getElementById('contentProduct').value.trim();
-        if (!product) { alert('请填写商品描述'); return; }
-        var btn = this; btn.disabled = true; btn.textContent = '创作中...';
-        fetchStream('/api/operations/content-stream', {api_key:apiKey, product:product, platform:document.getElementById('contentPlatform').value, audience:document.getElementById('contentAudience').value}, document.getElementById('contentResult'), btn, '生成内容');
-      });
-
-      document.getElementById('contentAudience').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') document.getElementById('btnContentGen').click();
-      });
-
-      // ─── Service Reply (流式) ───
-      document.getElementById('btnServiceReply').addEventListener('click', function() {
-        var scene = document.getElementById('serviceScene').value;
-        if (!scene) { alert('请选择客服场景'); return; }
-        var btn = this; btn.disabled = true; btn.textContent = '生成中...';
-        fetchStream('/api/operations/service-stream', {api_key:apiKey, scene:scene, context:document.getElementById('serviceContext').value}, document.getElementById('serviceResult'), btn, '获取话术');
-      });
-
-      document.getElementById('serviceContext').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') document.getElementById('btnServiceReply').click();
-      });
-
-      // ─── Pricing Strategy (流式) ───
-      document.getElementById('btnPricing').addEventListener('click', function() {
-        var product = document.getElementById('pricingProduct').value.trim();
-        if (!product) { alert('请填写商品名称'); return; }
-        var btn = this; btn.disabled = true; btn.textContent = '分析中...';
-        fetchStream('/api/operations/pricing-stream', {api_key:apiKey, product:product, cost:document.getElementById('pricingCost').value, platform:document.getElementById('pricingPlatform').value, competitors:document.getElementById('pricingCompetitor').value}, document.getElementById('pricingResult'), btn, '分析定价');
-      });
-
-      document.getElementById('pricingCompetitor').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') document.getElementById('btnPricing').click();
-      });
     })();
   </script>
 </body>

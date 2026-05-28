@@ -1,15 +1,15 @@
 import { Router } from "express";
 import { DEEPSEEK_API_KEY, checkConfig } from "../config/deepseek.js";
 import { deepseekStream } from "../llm/client.js";
-import { searchWeb, buildSearchQuery, shouldSearch } from "../search/webSearch.js";
+import { searchWeb, searchProductImages, buildSearchQuery, shouldSearch } from "../search/webSearch.js";
 import { detectIntent } from "../agent/intentDetector.js";
 import { getSession, appendMessage, getHistory } from "../agent/sessionManager.js";
-import { SYSTEM_PROMPT } from "../agent/systemPrompt.js";
+import { BUYER_PROMPT, SELLER_PROMPT } from "../agent/systemPrompt.js";
 
 const router = Router();
 
 router.post("/", async (req, res) => {
-  const { message, session_id, api_key } = req.body;
+  const { message, session_id, api_key, mode } = req.body;
   if (!message) {
     return res.status(400).json({ error: "message is required" });
   }
@@ -29,6 +29,10 @@ router.post("/", async (req, res) => {
   // 意图识别
   const intent = detectIntent(message);
 
+  // 选择模式对应的系统提示
+  const effectiveMode = mode === "seller" ? "seller" : "buyer";
+  const systemPrompt = effectiveMode === "seller" ? SELLER_PROMPT : BUYER_PROMPT;
+
   // 搜索增强（优雅降级）
   let enhancedMessage = message;
   if (shouldSearch(intent)) {
@@ -36,7 +40,19 @@ router.post("/", async (req, res) => {
       const query = buildSearchQuery(intent, message);
       const searchResult = await searchWeb(query, req.headers);
       if (searchResult) {
-        enhancedMessage = `[用户意图: ${intent}]\n\n用户问题: ${message}\n\n${searchResult}\n\n请基于以上实时搜索结果和你的知识库，为用户提供专业的购物建议。`;
+        // 同时搜索商品图片
+        let imageSection = "";
+        try {
+          const images = await searchProductImages(message);
+          if (images.length > 0) {
+            imageSection = `\n\n## 商品图片\n${images.map((url, i) => `${i + 1}. ![]( ${url} )`).join("\n")}\n`;
+          }
+        } catch (imgErr) {
+          console.error("Image search failed:", imgErr.message);
+        }
+
+        const role = effectiveMode === "seller" ? "为这位电商商家提供专业的运营建议" : "为用户提供专业的购物建议";
+        enhancedMessage = `[用户意图: ${intent}]\n\n用户问题: ${message}\n\n${searchResult}${imageSection}\n请基于以上实时搜索结果和你的知识库，${role}。在推荐商品时，务必使用搜索结果中提供的商品图片URL，用 ![商品名](图片URL) 格式展示每个推荐商品的主图。`;
       }
     } catch (e) {
       console.error("Search enhancement failed:", e.message);
@@ -44,7 +60,7 @@ router.post("/", async (req, res) => {
   }
 
   // 构建消息
-  const messages = [{ role: "system", content: SYSTEM_PROMPT }];
+  const messages = [{ role: "system", content: systemPrompt }];
   messages.push(...getHistory(sessionId));
   messages.push({ role: "user", content: enhancedMessage });
 

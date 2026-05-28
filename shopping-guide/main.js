@@ -6,6 +6,7 @@ import chatRouter from "./src/routes/chat.js";
 import suggestionsRouter from "./src/routes/suggestions.js";
 import healthRouter from "./src/routes/health.js";
 import settingsRouter from "./src/routes/settings.js";
+import imagesRouter from "./src/routes/images.js";
 import { deleteSession } from "./src/agent/sessionManager.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -19,6 +20,7 @@ app.use("/api/chat", chatRouter);
 app.use("/api/suggestions", suggestionsRouter);
 app.use("/api/health", healthRouter);
 app.use("/api", settingsRouter);
+app.use("/api/images", imagesRouter);
 
 app.delete("/api/chat/:session_id", (req, res) => {
   deleteSession(req.params.session_id || "default");

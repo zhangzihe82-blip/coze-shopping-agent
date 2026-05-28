@@ -111,6 +111,11 @@
       color: var(--text);
     }
 
+    .mode-toggle-row { display:flex; align-items:center; gap:4px; background:var(--surface-secondary); border-radius:20px; padding:3px; margin-right:4px; }
+    .mode-toggle-btn { height:28px; padding:0 14px; border-radius:17px; border:none; font-size:12px; font-weight:500; font-family:inherit; cursor:pointer; transition:all var(--transition); background:transparent; color:var(--text-secondary); white-space:nowrap; }
+    .mode-toggle-btn.active { background:#fff; color:var(--accent); box-shadow:0 1px 3px rgba(0,0,0,0.08); font-weight:600; }
+    .mode-icon { font-size:14px; margin-right:2px; }
+
     .btn-icon {
       width: 32px;
       height: 32px;
@@ -317,6 +322,28 @@
     .msg-bubble pre { background: #1D1D1F; color: #F5F5F7; padding: 14px 16px; border-radius: 10px; overflow-x: auto; margin: 10px 0; font-size: 13px; line-height: 1.5; }
     .msg-bubble blockquote { border-left: 3px solid var(--accent); margin: 10px 0; padding: 4px 0 4px 14px; color: var(--text-secondary); background: var(--accent-light); border-radius: 0 6px 6px 0; }
     .msg-bubble hr { border: none; border-top: 1px solid var(--border-light); margin: 14px 0; }
+
+    /* Product images in chat */
+    .msg-bubble img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
+      margin: 8px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: block;
+    }
+    .product-images {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 8px;
+      margin: 10px 0;
+    }
+    .product-images img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      margin: 0;
+    }
 
     .typing-dots { display: flex; gap: 5px; padding: 6px 0; }
     .typing-dots span { width: 7px; height: 7px; background: #C7C7CC; border-radius: 50%; animation: dotBounce 1.3s infinite; }
@@ -605,6 +632,10 @@
       灵犀导购
     </div>
     <div class="nav-actions">
+      <div class="mode-toggle-row" id="modeToggle">
+        <button class="mode-toggle-btn active" data-mode="buyer" id="btnBuyerMode"><span class="mode-icon">🛒</span>买家</button>
+        <button class="mode-toggle-btn" data-mode="seller" id="btnSellerMode"><span class="mode-icon">📊</span>卖家</button>
+      </div>
       <a href="/xhs" class="nav-btn btn-ghost" style="text-decoration:none;" title="小红书发布">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         小红书
@@ -630,7 +661,7 @@
         <h1>嗨，我是灵犀导购</h1>
         <p class="subtitle">不是冷冰冰的机器人。我像你身边那个懂行的朋友，帮你挑到真正适合的东西。</p>
         <div class="suggestion-grid" id="suggestionGrid"></div>
-        <div class="feature-row">
+        <div class="feature-row" id="featureRow">
           <span class="feature-badge">智能推荐</span>
           <span class="feature-badge">商品对比</span>
           <span class="feature-badge">评价分析</span>
@@ -704,6 +735,31 @@
       let isStreaming = false;
       let sessionId = 's_' + Date.now();
       let apiKey = '';
+      let currentMode = 'buyer';
+
+      // ─── Mode toggle ───
+      document.getElementById('btnBuyerMode').addEventListener('click', function() { switchMode('buyer'); });
+      document.getElementById('btnSellerMode').addEventListener('click', function() { switchMode('seller'); });
+
+      function switchMode(mode) {
+        currentMode = mode;
+        document.getElementById('btnBuyerMode').classList.toggle('active', mode === 'buyer');
+        document.getElementById('btnSellerMode').classList.toggle('active', mode === 'seller');
+        // Update placeholder and welcome screen
+        if (mode === 'seller') {
+          inputField.placeholder = '描述你的运营问题，如：帮我看下最近防晒霜的市场竞争情况…';
+          document.querySelector('.welcome h1').textContent = '嗨，我是灵犀商道';
+          document.querySelector('.welcome .subtitle').textContent = '你的专属电商运营顾问。市场分析、竞品洞察、定价策略，帮你做更聪明的经营决策。';
+          document.getElementById('featureRow').innerHTML = '<span class="feature-badge">市场分析</span><span class="feature-badge">竞品洞察</span><span class="feature-badge">定价策略</span><span class="feature-badge">规则解读</span><span class="feature-badge">选品建议</span><span class="feature-badge">实时联网</span>';
+        } else {
+          inputField.placeholder = '告诉我你想买什么，或者有什么购物纠结…';
+          document.querySelector('.welcome h1').textContent = '嗨，我是灵犀导购';
+          document.querySelector('.welcome .subtitle').textContent = '不是冷冰冰的机器人。我像你身边那个懂行的朋友，帮你挑到真正适合的东西。';
+          document.getElementById('featureRow').innerHTML = '<span class="feature-badge">智能推荐</span><span class="feature-badge">商品对比</span><span class="feature-badge">评价分析</span><span class="feature-badge">营销文案</span><span class="feature-badge">全品类覆盖</span><span class="feature-badge">实时联网</span>';
+        }
+        // Clear chat and reload suggestions
+        clearChat();
+      }
 
       // ─── Settings ───
       function loadApiKey() {
@@ -802,6 +858,8 @@
         if (!text) return '';
         let html = text
           .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          // Images — must be before other inline patterns
+          .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy" />')
           // Code blocks
           .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
           .replace(/`([^`]+)`/g, '<code>$1</code>')
@@ -837,24 +895,29 @@
         // Remove <br> between </li> and <li>
         html = html.replace(/<\/li><br><li>/g, '</li><li>');
         html = html.replace(/<\/ul><br>/g, '</ul>');
+        // Clean up <br> around <img>
+        html = html.replace(/<br><img /g, '<img ');
+        html = html.replace(/<img ([^>]*)><br>/g, '<img $1>');
 
         return '<p>' + html + '</p>';
       }
 
       // ─── Load suggestions ───
       function loadSuggestions() {
-        fetch('/api/suggestions')
+        fetch('/api/suggestions?mode=' + currentMode)
           .then(function(r) { return r.json(); })
           .then(function(d) {
-            const icons = ['🎧','💄','🎁','📱','🍳','💻'];
+            const buyerIcons = ['🎧','💄','🎁','📱','🍳','💻'];
+            const sellerIcons = ['📦','☀️','⚔️','📋','💰','📈'];
+            const icons = currentMode === 'seller' ? sellerIcons : buyerIcons;
             suggestionGrid.innerHTML = d.suggestions.map(function(s, i) {
-              return '<button class="suggestion-card"><span class="sug-icon">' + (icons[i] || '🛍') +
+              return '<button class="suggestion-card" data-text="' + s.replace(/"/g, '&quot;') + '"><span class="sug-icon">' + (icons[i] || '🛍') +
                 '</span>' + s + '</button>';
             }).join('');
-            // Bind click events
+            // Bind click events — use data-text to avoid regex bug
             suggestionGrid.querySelectorAll('.suggestion-card').forEach(function(btn) {
               btn.addEventListener('click', function() {
-                inputField.value = this.textContent.replace(/^\S+\s*/, '').trim();
+                inputField.value = this.dataset.text;
                 sendMessage();
               });
             });
@@ -898,7 +961,7 @@
         fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: message, session_id: sessionId, api_key: apiKey })
+          body: JSON.stringify({ message: message, session_id: sessionId, api_key: apiKey, mode: currentMode })
         })
         .then(function(res) {
           if (!res.ok) throw new Error('HTTP ' + res.status);

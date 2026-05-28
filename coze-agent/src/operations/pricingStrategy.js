@@ -1,8 +1,14 @@
 import { askAI } from "../llm/client.js";
+import { searchWeb } from "../search/webSearch.js";
 
 const PROMPT = `你是电商定价策略专家，精通成本核算、竞品比价、促销定价、价格心理学和多平台差异化定价。
 
-你的任务：根据商家提供的商品成本和市场信息，给出科学的定价策略。
+你的任务：基于实时搜索数据，给出科学的定价策略。
+
+⚠️ 时效性要求：
+- 优先引用搜索数据中的竞品实际售价
+- 考虑当前季节和大促节奏
+- 标注数据来源
 
 输出格式（Markdown）：
 
@@ -28,6 +34,22 @@ const PROMPT = `你是电商定价策略专家，精通成本核算、竞品比�
 ## ⚠️ 避雷提醒
 - 该品类最容易被平台判定为「价格违规」的操作`;
 
+async function searchForPricing(params = {}) {
+  const { product = "", platform = "" } = params;
+  const y = new Date().getFullYear();
+  const queries = [
+    `${product} 价格 ${platform} 多少钱 ${y}`,
+    `${product} 竞品 价格 对比 ${y}`,
+    `${platform} ${product} 定价 策略 利润`,
+  ].filter(q => q.trim());
+  let result = "";
+  for (const q of queries) {
+    const r = await searchWeb(q);
+    if (r) result += r + "\n\n";
+  }
+  return result;
+}
+
 export { PROMPT as PRICING_PROMPT };
 
 export async function getPricingAdvice(params = {}, apiKey = "") {
@@ -37,11 +59,14 @@ export async function getPricingAdvice(params = {}, apiKey = "") {
     return { content: "请填写商品信息和成本，如：蓝牙耳机、成本35元...", generatedAt: new Date().toISOString() };
   }
 
+  const searchResult = await searchForPricing(params);
+
   const userPrompt = [
     `商品：${product}`,
     cost ? `成本（含运费）：${cost}` : "成本未知，请根据市场行情估算",
     platform ? `目标平台：${platform}` : "",
     competitors ? `竞品参考价：${competitors}` : "",
+    searchResult ? `以下是实时搜索数据供参考：\n\n${searchResult}` : "",
     `请给出完整的定价策略和促销规划。`,
   ].filter(Boolean).join("\n");
 
