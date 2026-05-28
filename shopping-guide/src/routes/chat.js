@@ -40,34 +40,36 @@ router.post("/", async (req, res) => {
       const query = buildSearchQuery(intent, message);
       const searchResult = await searchWeb(query, req.headers);
 
-      // 同时搜索电商平台真实商品链接
+      // 同时搜索电商平台真实商品链接 + 提取商品图片
       let ecommerceSection = "";
+      let imageSection = "";
       try {
-        const ecomResults = await searchEcommerce(message);
-        if (ecomResults.length > 0) {
-          const ecomLines = ecomResults.slice(0, 6).map((item, i) =>
-            `${i + 1}. **${item.title}** [${item.platform || '电商'}]\n   🔗 ${item.url}`
+        const { products, images } = await searchEcommerce(message);
+
+        if (products.length > 0) {
+          const ecomLines = products.map((item, i) =>
+            `${i + 1}. **[${item.platform}] ${item.title}** — ${item.price || "查看详情"}\n   🔗 [点击去${item.platform}购买](${item.url})`
           ).join("\n");
-          ecommerceSection = `\n\n## 电商平台商品链接（真实购买）\n以下为各电商平台的真实商品页面，请务必在推荐中使用这些链接：\n${ecomLines}\n`;
+          ecommerceSection = `\n\n## 真实商品链接（可购买）\n以下是从电商平台提取的**真实商品详情页直达链接**，请务必在推荐中使用：\n${ecomLines}\n`;
+        }
+
+        // Always include platform search URLs as fallback
+        const encQuery = encodeURIComponent(message);
+        ecommerceSection += `\n\n## 电商平台直达搜索（更多选择）\n- [京东搜索 - ${message}](https://search.jd.com/Search?keyword=${encQuery}&enc=utf-8)\n- [天猫搜索 - ${message}](https://list.tmall.com/search_product.htm?q=${encQuery})\n- [淘宝搜索 - ${message}](https://s.taobao.com/search?q=${encQuery})\n- [拼多多搜索 - ${message}](https://mobile.yangkeduo.com/search_result.html?search_key=${encQuery})\n- [当当搜索 - ${message}](https://search.dangdang.com/?key=${encQuery}&act=input)\n- [苏宁搜索 - ${message}](https://search.suning.com/${encQuery}/)\n`;
+
+        if (images.length > 0) {
+          imageSection = `\n\n## 商品图片\n${images.map((url, i) => `${i + 1}. ![](${url})`).join("\n")}\n`;
         }
       } catch (ecomErr) {
         console.error("Ecommerce search failed:", ecomErr.message);
-      }
-
-      // 同时搜索商品图片
-      let imageSection = "";
-      try {
-        const images = await searchProductImages(message);
-        if (images.length > 0) {
-          imageSection = `\n\n## 商品图片\n${images.map((url, i) => `${i + 1}. ![]( ${url} )`).join("\n")}\n`;
-        }
-      } catch (imgErr) {
-        console.error("Image search failed:", imgErr.message);
+        // Fallback to platform search URLs only
+        const encQuery = encodeURIComponent(message);
+        ecommerceSection = `\n\n## 电商平台直达链接（点击即可查看商品）\n- [京东 - ${message}](https://search.jd.com/Search?keyword=${encQuery}&enc=utf-8)\n- [天猫 - ${message}](https://list.tmall.com/search_product.htm?q=${encQuery})\n- [淘宝 - ${message}](https://s.taobao.com/search?q=${encQuery})\n- [拼多多 - ${message}](https://mobile.yangkeduo.com/search_result.html?search_key=${encQuery})\n- [当当 - ${message}](https://search.dangdang.com/?key=${encQuery}&act=input)\n- [苏宁 - ${message}](https://search.suning.com/${encQuery}/)\n`;
       }
 
       if (searchResult || ecommerceSection) {
         const role = effectiveMode === "seller" ? "为这位电商商家提供专业的运营建议" : "为用户提供专业的购物建议";
-        enhancedMessage = `[用户意图: ${intent}]\n\n用户问题: ${message}\n\n${searchResult}${ecommerceSection}${imageSection}\n请基于以上实时搜索结果和你的知识库，${role}。\n\n重要提醒：\n- 在推荐商品时，务必使用上面"电商平台商品链接"中的真实链接\n- 用 [商品名](真实URL) 格式创建可点击的购买链接\n- 使用搜索结果中的商品图片URL，用 ![商品名](图片URL) 格式展示商品主图\n- 禁止编造链接，只能用搜索结果中提供的真实URL`;
+        enhancedMessage = `[用户意图: ${intent}]\n\n用户问题: ${message}\n\n${searchResult}${ecommerceSection}${imageSection}\n请基于以上实时搜索结果和你的知识库，${role}。\n\n重要提醒：\n- 必须使用上面"真实商品链接"中的商品详情页直达链接\n- 用 [商品名](真实URL) 格式创建可点击的购买链接\n- 使用上面"商品图片"中的图片URL，用 ![商品名](图片URL) 格式展示每个商品的主图\n- 禁止编造链接，只能用搜索结果中提供的真实URL`;
       }
     } catch (e) {
       console.error("Search enhancement failed:", e.message);
