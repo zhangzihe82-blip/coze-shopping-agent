@@ -19,16 +19,39 @@ function loadAccount() {
   return account;
 }
 
-// Parse cookie string (from browser DevTools → Application → Cookies) into object
+// Parse cookie string into object.
+// Supports two formats:
+//   1. Chrome DevTools table format (tab-separated): Name\tValue\tDomain\tPath\t...
+//   2. Standard cookie header format: name=value; name2=value2
 function parseCookieString(cookieStr) {
   const cookies = {};
   if (!cookieStr || typeof cookieStr !== "string") return cookies;
 
-  cookieStr.split(/[;\n]/).forEach((line) => {
-    const idx = line.indexOf("=");
+  const text = cookieStr.trim();
+
+  // Detect Chrome DevTools table format (contains tabs with header-like first column)
+  if (text.includes("\t")) {
+    const lines = text.split(/[\n\r]+/);
+    for (const line of lines) {
+      const cols = line.split("\t");
+      if (cols.length >= 2) {
+        const name = cols[0].trim();
+        const value = cols[1].trim();
+        // Skip header row and invalid entries
+        if (name && value && name !== "Name" && name !== "名称" && !name.startsWith("[")) {
+          cookies[name] = value;
+        }
+      }
+    }
+    return cookies;
+  }
+
+  // Standard cookie header format: name=value; name2=value2
+  text.split(/[;\n]/).forEach((part) => {
+    const idx = part.indexOf("=");
     if (idx > 0) {
-      const name = line.substring(0, idx).trim();
-      const value = line.substring(idx + 1).trim();
+      const name = part.substring(0, idx).trim();
+      const value = part.substring(idx + 1).trim();
       if (name && value) {
         cookies[name] = value;
       }
