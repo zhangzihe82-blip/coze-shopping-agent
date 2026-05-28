@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { DEEPSEEK_API_KEY, checkConfig } from "../config/deepseek.js";
 import { deepseekStream } from "../llm/client.js";
-import { searchWeb, searchProductImages, buildSearchQuery, shouldSearch } from "../search/webSearch.js";
+import { searchWeb, searchProductImages, searchEcommerce, buildSearchQuery, shouldSearch } from "../search/webSearch.js";
 import { detectIntent } from "../agent/intentDetector.js";
 import { getSession, appendMessage, getHistory } from "../agent/sessionManager.js";
 import { BUYER_PROMPT, SELLER_PROMPT } from "../agent/systemPrompt.js";
@@ -39,20 +39,35 @@ router.post("/", async (req, res) => {
     try {
       const query = buildSearchQuery(intent, message);
       const searchResult = await searchWeb(query, req.headers);
-      if (searchResult) {
-        // 同时搜索商品图片
-        let imageSection = "";
-        try {
-          const images = await searchProductImages(message);
-          if (images.length > 0) {
-            imageSection = `\n\n## 商品图片\n${images.map((url, i) => `${i + 1}. ![]( ${url} )`).join("\n")}\n`;
-          }
-        } catch (imgErr) {
-          console.error("Image search failed:", imgErr.message);
-        }
 
+      // 同时搜索电商平台真实商品链接
+      let ecommerceSection = "";
+      try {
+        const ecomResults = await searchEcommerce(message);
+        if (ecomResults.length > 0) {
+          const ecomLines = ecomResults.slice(0, 6).map((item, i) =>
+            `${i + 1}. **${item.title}** [${item.platform || '电商'}]\n   🔗 ${item.url}`
+          ).join("\n");
+          ecommerceSection = `\n\n## 电商平台商品链接（真实购买）\n以下为各电商平台的真实商品页面，请务必在推荐中使用这些链接：\n${ecomLines}\n`;
+        }
+      } catch (ecomErr) {
+        console.error("Ecommerce search failed:", ecomErr.message);
+      }
+
+      // 同时搜索商品图片
+      let imageSection = "";
+      try {
+        const images = await searchProductImages(message);
+        if (images.length > 0) {
+          imageSection = `\n\n## 商品图片\n${images.map((url, i) => `${i + 1}. ![]( ${url} )`).join("\n")}\n`;
+        }
+      } catch (imgErr) {
+        console.error("Image search failed:", imgErr.message);
+      }
+
+      if (searchResult || ecommerceSection) {
         const role = effectiveMode === "seller" ? "为这位电商商家提供专业的运营建议" : "为用户提供专业的购物建议";
-        enhancedMessage = `[用户意图: ${intent}]\n\n用户问题: ${message}\n\n${searchResult}${imageSection}\n请基于以上实时搜索结果和你的知识库，${role}。在推荐商品时，务必使用搜索结果中提供的商品图片URL，用 ![商品名](图片URL) 格式展示每个推荐商品的主图。`;
+        enhancedMessage = `[用户意图: ${intent}]\n\n用户问题: ${message}\n\n${searchResult}${ecommerceSection}${imageSection}\n请基于以上实时搜索结果和你的知识库，${role}。\n\n重要提醒：\n- 在推荐商品时，务必使用上面"电商平台商品链接"中的真实链接\n- 用 [商品名](真实URL) 格式创建可点击的购买链接\n- 使用搜索结果中的商品图片URL，用 ![商品名](图片URL) 格式展示商品主图\n- 禁止编造链接，只能用搜索结果中提供的真实URL`;
       }
     } catch (e) {
       console.error("Search enhancement failed:", e.message);

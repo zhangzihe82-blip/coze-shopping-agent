@@ -4,7 +4,7 @@ import http from "http";
 // ─── Bing Web Search ───
 async function bingSearch(query) {
   const q = encodeURIComponent(query);
-  const url = `https://www.bing.com/search?q=${q}&setlang=zh-cn&count=10`;
+  const url = `https://cn.bing.com/search?q=${q}&setlang=zh-cn&count=10`;
 
   return new Promise((resolve, reject) => {
     const get = url.startsWith("https") ? https.get : http.get;
@@ -17,7 +17,7 @@ async function bingSearch(query) {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         const redirectUrl = res.headers.location.startsWith("http")
           ? res.headers.location
-          : `https://www.bing.com${res.headers.location}`;
+          : `https://cn.bing.com${res.headers.location}`;
         fetchUrl(redirectUrl).then(resolve).catch(reject);
         return;
       }
@@ -56,7 +56,13 @@ function parseBingResults(html) {
                       || content.match(/<div[^>]*class="[^"]*b_caption[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
 
     const url = urlMatch ? urlMatch[1].replace(/&amp;/g, "&") : "";
-    const title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim() : "";
+    // Clean title: strip all HTML tags and HTML entities
+    let title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#\d+;/g, "").trim() : "";
+    // Remove domain prefix + URL prefix that Bing prepends (e.g., "baidu.comhttps://baike.baidu.com › ...")
+    title = title.replace(/^[a-z0-9.-]+\.[a-z]{2,}https?:\/\/[^\s›>]*\s*[›>]\s*/i, "");
+    // Remove bare domain prefix (e.g., "baidu.com › ...")
+    title = title.replace(/^[a-z0-9.-]+\.[a-z]{2,}\s*[›>]\s*/i, "");
+    title = title.trim();
     const snippet = snippetMatch ? snippetMatch[1].replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim() : "";
 
     if (title && url && url.startsWith("http")) {
@@ -180,6 +186,88 @@ async function searchWeb(query, _reqHeaders = {}) {
   return "";
 }
 
+// ─── E-commerce product search (real purchase links) ───
+async function searchEcommerce(query) {
+  const allResults = [];
+
+  // Search 1: Bing general search for reviews and recommendations (often contain real links)
+  try {
+    const items = await Promise.race([
+      bingSearch(`${query} 购买 推荐 评测 价格`),
+      new Promise((resolve) => setTimeout(() => resolve([]), 4000)),
+    ]);
+    for (const item of items) item.platform = "综合推荐";
+    allResults.push(...items);
+  } catch (e) {}
+
+  // Search 2: Search specifically for JD product pages
+  try {
+    const items = await Promise.race([
+      bingSearch(`${query} 京东`),
+      new Promise((resolve) => setTimeout(() => resolve([]), 4000)),
+    ]);
+    for (const item of items) item.platform = "京东相关";
+    allResults.push(...items);
+  } catch (e) {}
+
+  // Product URL patterns for known e-commerce platforms
+  const productUrlPatterns = [
+    /item\.jd\.com\/\d+/,
+    /detail\.tmall\.com/,
+    /item\.taobao\.com/,
+    /mobile\.yangkeduo\.com/,
+    /yangkeduo\.com\/goods/,
+    /chaoshi\.detail\.tmall/,
+    /\.vip\.com\//,
+    /\.sunin\.com\//,
+  ];
+
+  // Filter and separate real e-commerce links from informational pages
+  const ecomMatches = [];
+  const otherResults = [];
+
+  for (const item of allResults) {
+    const isProductPage = productUrlPatterns.some((p) => p.test(item.url));
+    if (isProductPage) {
+      ecomMatches.push({ ...item, platform: "真实商品链接" });
+    } else {
+      otherResults.push(item);
+    }
+  }
+
+  // Combine: e-commerce product pages first, then other results
+  const combined = [...ecomMatches, ...otherResults];
+
+  // Deduplicate
+  const seen = new Set();
+  const unique = [];
+  for (const item of combined) {
+    if (!seen.has(item.url) && item.url.startsWith("http")) {
+      seen.add(item.url);
+      unique.push(item);
+    }
+    if (unique.length >= 8) break;
+  }
+
+  // Always append platform search URLs as guaranteed-working links
+  const encQuery = encodeURIComponent(query);
+  const platformLinks = [
+    { title: `${query} - 京东搜索结果`, url: `https://search.jd.com/Search?keyword=${encQuery}&enc=utf-8`, platform: "京东" },
+    { title: `${query} - 天猫搜索结果`, url: `https://list.tmall.com/search_product.htm?q=${encQuery}`, platform: "天猫" },
+    { title: `${query} - 淘宝搜索结果`, url: `https://s.taobao.com/search?q=${encQuery}`, platform: "淘宝" },
+    { title: `${query} - 拼多多搜索结果`, url: `https://mobile.yangkeduo.com/search_result.html?search_key=${encQuery}`, platform: "拼多多" },
+  ];
+
+  for (const link of platformLinks) {
+    if (!seen.has(link.url)) {
+      seen.add(link.url);
+      unique.push(link);
+    }
+  }
+
+  return unique.slice(0, 12);
+}
+
 // ─── Product image search (for frontend use) ───
 async function searchProductImages(query) {
   try {
@@ -209,4 +297,4 @@ function shouldSearch(intent) {
   return ["recommend", "compare", "review", "price", "gift"].includes(intent);
 }
 
-export { searchWeb, searchProductImages, buildSearchQuery, shouldSearch };
+export { searchWeb, searchProductImages, searchEcommerce, buildSearchQuery, shouldSearch };
