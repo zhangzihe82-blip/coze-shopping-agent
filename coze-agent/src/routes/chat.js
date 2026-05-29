@@ -8,6 +8,14 @@ import { SYSTEM_PROMPT } from "../agent/systemPrompt.js";
 
 const router = Router();
 
+// 提取 API 配置
+function getApiOptions(body) {
+  const options = {};
+  if (body.base_url) options.baseUrl = body.base_url;
+  if (body.model) options.model = body.model;
+  return options;
+}
+
 router.post("/", async (req, res) => {
   const { message, session_id, api_key } = req.body;
   if (!message) {
@@ -25,6 +33,7 @@ router.post("/", async (req, res) => {
 
   const sessionId = session_id || "default";
   const session = getSession(sessionId);
+  const apiOptions = getApiOptions(req.body);
 
   // 意图识别
   const intent = detectIntent(message);
@@ -56,7 +65,7 @@ router.post("/", async (req, res) => {
 
   try {
     let fullResponse = "";
-    for await (const chunk of deepseekStream(messages, effectiveKey)) {
+    for await (const chunk of deepseekStream(messages, effectiveKey, apiOptions)) {
       if (chunk.content) {
         fullResponse += chunk.content;
         res.write(`data: ${JSON.stringify({ content: chunk.content })}\n\n`);

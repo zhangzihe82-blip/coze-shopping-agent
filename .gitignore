@@ -19,6 +19,16 @@ desktop.ini
 # Node
 node_modules/
 
+# Build output (Electron)
+dist/
+
+# Runtime data
+data/
+
+# OMC state
+.omc/
+.claude/
+
 # Generated PDF images (keep source only)
 *.png
 *.jpg

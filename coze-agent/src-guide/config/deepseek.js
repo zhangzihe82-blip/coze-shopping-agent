@@ -1,7 +1,6 @@
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "";
-// 支持自定义 API 端点（如 ccswitch 等代理服务）
-const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com/v1";
-const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-chat";
+const DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1";
+const DEEPSEEK_MODEL = "deepseek-chat";
 
 function checkConfig() {
   if (!DEEPSEEK_API_KEY) {

@@ -1,11 +1,20 @@
 {
-  "name": "lingxi-daogou",
-  "version": "1.0.0",
-  "description": "灵犀导购 - AI电商智能购物助手",
+  "name": "lingxi-market",
+  "productName": "灵犀市场洞察",
+  "version": "1.0.1",
+  "description": "灵犀市场洞察 - AI电商智能运营中心，市场监测、竞品分析、智能问答一站式解决方案",
   "type": "module",
+  "main": "electron.cjs",
+  "author": "LingXi Team",
+  "license": "MIT",
   "scripts": {
     "dev": "node main.js",
-    "start": "node main.js"
+    "start": "node main.js",
+    "electron": "electron .",
+    "build:win": "electron-builder --win --x64",
+    "build:win32": "electron-builder --win --ia32",
+    "build:mac": "electron-builder --mac",
+    "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
     "coze-coding-dev-sdk": "latest",
@@ -13,5 +22,71 @@
     "marked": "^12.0.0",
     "multer": "^2.1.1",
     "puppeteer": "^25.1.0"
+  },
+  "devDependencies": {
+    "docx": "^9.7.1",
+    "electron": "^30.5.1",
+    "electron-builder": "^24.13.3",
+    "pkg": "^5.8.1",
+    "sharp": "^0.34.5"
+  },
+  "build": {
+    "appId": "com.lingxi.market",
+    "productName": "灵犀市场洞察",
+    "copyright": "Copyright © 2024 LingXi Team",
+    "asar": false,
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "**/*",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/*.d.ts",
+      "!**/node_modules/.bin",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+      "!.editorconfig",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+      "!**/{appveyor.yml,.travis.yml,circle.yml}",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
+      "!dist/**",
+      "!data/**",
+      "!scripts/**"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "灵犀市场洞察",
+      "license": "LICENSE",
+      "deleteAppDataOnUninstall": false,
+      "language": "2052"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "build/icon.icns",
+      "category": "public.app-category.productivity"
+    }
   }
 }

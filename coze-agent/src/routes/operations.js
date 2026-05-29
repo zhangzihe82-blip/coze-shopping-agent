@@ -10,39 +10,47 @@ import { searchWeb } from "../search/webSearch.js";
 const router = Router();
 const Y = new Date().getFullYear();
 
+// 提取 API 配置
+function getApiOptions(body) {
+  const options = {};
+  if (body.base_url) options.baseUrl = body.base_url;
+  if (body.model) options.model = body.model;
+  return options;
+}
+
 // ─── 非流式（兼容旧版） ───
 
 router.post("/operations/rules", async (req, res) => {
   try {
-    const result = await monitorRules(req.body.platform || "", req.body.api_key || "");
+    const result = await monitorRules(req.body.platform || "", req.body.api_key || "", getApiOptions(req.body));
     res.json({ ok: true, ...result });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
 
 router.post("/operations/pick", async (req, res) => {
   try {
-    const result = await recommendProduct({ budget: req.body.budget, platform: req.body.platform, category: req.body.category }, req.body.api_key || "");
+    const result = await recommendProduct({ budget: req.body.budget, platform: req.body.platform, category: req.body.category }, req.body.api_key || "", getApiOptions(req.body));
     res.json({ ok: true, ...result });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
 
 router.post("/operations/content", async (req, res) => {
   try {
-    const result = await generateContent({ product: req.body.product, platform: req.body.platform, audience: req.body.audience, priceRange: req.body.priceRange }, req.body.api_key || "");
+    const result = await generateContent({ product: req.body.product, platform: req.body.platform, audience: req.body.audience, priceRange: req.body.priceRange }, req.body.api_key || "", getApiOptions(req.body));
     res.json({ ok: true, ...result });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
 
 router.post("/operations/service", async (req, res) => {
   try {
-    const result = await getServiceReply(req.body.scene || "", req.body.context || "", req.body.api_key || "");
+    const result = await getServiceReply(req.body.scene || "", req.body.context || "", req.body.api_key || "", getApiOptions(req.body));
     res.json({ ok: true, ...result });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
 
 router.post("/operations/pricing", async (req, res) => {
   try {
-    const result = await getPricingAdvice({ product: req.body.product, cost: req.body.cost, platform: req.body.platform, competitors: req.body.competitors }, req.body.api_key || "");
+    const result = await getPricingAdvice({ product: req.body.product, cost: req.body.cost, platform: req.body.platform, competitors: req.body.competitors }, req.body.api_key || "", getApiOptions(req.body));
     res.json({ ok: true, ...result });
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
@@ -71,7 +79,7 @@ router.post("/operations/rules-stream", async (req, res) => {
       `请分析当前各电商平台的最新规则变动和应对策略。${platformHint}。`,
       searchResult ? `以下是实时搜索数据供参考：\n\n${searchResult}` : "请基于你最新的知识给出分析。",
     ].join("\n");
-    await streamSSE(RULES_PROMPT, userPrompt, req.body.api_key || "", res);
+    await streamSSE(RULES_PROMPT, userPrompt, req.body.api_key || "", res, getApiOptions(req.body));
   } catch (e) { if (!res.headersSent) res.status(500).json({ ok: false, error: e.message }); }
 });
 
@@ -92,7 +100,7 @@ router.post("/operations/pick-stream", async (req, res) => {
       searchResult ? `以下是实时搜索数据供参考：\n\n${searchResult}` : "",
       `请根据以上条件，给出最适合的选品方向和具体运营建议。`,
     ].filter(Boolean).join("\n");
-    await streamSSE(PICK_PROMPT, userPrompt, req.body.api_key || "", res);
+    await streamSSE(PICK_PROMPT, userPrompt, req.body.api_key || "", res, getApiOptions(req.body));
   } catch (e) { if (!res.headersSent) res.status(500).json({ ok: false, error: e.message }); }
 });
 
@@ -115,7 +123,7 @@ router.post("/operations/content-stream", async (req, res) => {
       searchResult ? `以下是实时热门内容趋势供参考：\n\n${searchResult}` : "",
       `请为我生成完整的营销内容方案，要求口语化、有爆款潜质，直接可用。`,
     ].filter(Boolean).join("\n");
-    await streamSSE(CONTENT_PROMPT, userPrompt, req.body.api_key || "", res);
+    await streamSSE(CONTENT_PROMPT, userPrompt, req.body.api_key || "", res, getApiOptions(req.body));
   } catch (e) { if (!res.headersSent) res.status(500).json({ ok: false, error: e.message }); }
 });
 
@@ -138,7 +146,7 @@ router.post("/operations/service-stream", async (req, res) => {
       context ? `补充信息：${context}` : "",
       `请给出专业的客服回复话术和应对策略。`,
     ].filter(Boolean).join("\n");
-    await streamSSE(SERVICE_PROMPT, userPrompt, req.body.api_key || "", res);
+    await streamSSE(SERVICE_PROMPT, userPrompt, req.body.api_key || "", res, getApiOptions(req.body));
   } catch (e) { if (!res.headersSent) res.status(500).json({ ok: false, error: e.message }); }
 });
 
@@ -161,7 +169,7 @@ router.post("/operations/pricing-stream", async (req, res) => {
       searchResult ? `以下是实时搜索的竞品价格数据供参考：\n\n${searchResult}` : "",
       `请给出完整的定价策略和促销规划。`,
     ].filter(Boolean).join("\n");
-    await streamSSE(PRICING_PROMPT, userPrompt, req.body.api_key || "", res);
+    await streamSSE(PRICING_PROMPT, userPrompt, req.body.api_key || "", res, getApiOptions(req.body));
   } catch (e) { if (!res.headersSent) res.status(500).json({ ok: false, error: e.message }); }
 });
 

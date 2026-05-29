@@ -1,15 +1,18 @@
 import { DEEPSEEK_BASE_URL, DEEPSEEK_MODEL } from "../config/deepseek.js";
 
-async function* deepseekStream(messages, apiKey = "") {
+async function* deepseekStream(messages, apiKey = "", options = {}) {
   const key = apiKey || process.env.DEEPSEEK_API_KEY || "";
-  const response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+  const baseUrl = options.baseUrl || DEEPSEEK_BASE_URL;
+  const model = options.model || DEEPSEEK_MODEL;
+
+  const response = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${key}`,
     },
     body: JSON.stringify({
-      model: DEEPSEEK_MODEL,
+      model,
       messages,
       temperature: 0.7,
       max_tokens: 4096,
@@ -26,7 +29,7 @@ async function* deepseekStream(messages, apiKey = "") {
     } catch {
       errorMsg = errorText;
     }
-    throw new Error(`DeepSeek API 错误 (${response.status}): ${errorMsg}`);
+    throw new Error(`API 错误 (${response.status}): ${errorMsg}`);
   }
 
   const reader = response.body.getReader();
@@ -60,20 +63,20 @@ async function* deepseekStream(messages, apiKey = "") {
   }
 }
 
-async function askAI(systemPrompt, userPrompt, apiKey = "") {
+async function askAI(systemPrompt, userPrompt, apiKey = "", options = {}) {
   const messages = [
     { role: "system", content: systemPrompt },
     { role: "user", content: userPrompt },
   ];
   let fullText = "";
-  for await (const chunk of deepseekStream(messages, apiKey)) {
+  for await (const chunk of deepseekStream(messages, apiKey, options)) {
     if (chunk.content) fullText += chunk.content;
   }
   return fullText;
 }
 
 // SSE 流式输出到客户端，token 逐个推送
-async function streamSSE(systemPrompt, userPrompt, apiKey, res) {
+async function streamSSE(systemPrompt, userPrompt, apiKey, res, options = {}) {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
@@ -85,7 +88,7 @@ async function streamSSE(systemPrompt, userPrompt, apiKey, res) {
       { role: "user", content: userPrompt },
     ];
 
-    for await (const chunk of deepseekStream(messages, apiKey)) {
+    for await (const chunk of deepseekStream(messages, apiKey, options)) {
       if (chunk.content) {
         res.write(`data: ${JSON.stringify({ token: chunk.content })}\n\n`);
       }

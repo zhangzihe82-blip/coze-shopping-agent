@@ -5,6 +5,14 @@ import { searchWeb } from "../search/webSearch.js";
 
 const router = Router();
 
+// 提取 API 配置
+function getApiOptions(body) {
+  const options = {};
+  if (body.base_url) options.baseUrl = body.base_url;
+  if (body.model) options.model = body.model;
+  return options;
+}
+
 // 非流式（兼容旧版）
 router.post("/qa/ask", async (req, res) => {
   const { api_key, question } = req.body;
@@ -12,7 +20,7 @@ router.post("/qa/ask", async (req, res) => {
     return res.status(400).json({ ok: false, error: "请输入你的问题" });
   }
   try {
-    const result = await askQuestion(question, api_key || "");
+    const result = await askQuestion(question, api_key || "", getApiOptions(req.body));
     res.json({ ok: true, ...result });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
@@ -42,7 +50,7 @@ router.post("/qa/ask-stream", async (req, res) => {
         : "请基于你的知识给出专业回答。如果涉及需要最新信息的问题，请说明信息时效性。",
     ].join("\n");
 
-    await streamSSE(QA_PROMPT, userPrompt, api_key || "", res);
+    await streamSSE(QA_PROMPT, userPrompt, api_key || "", res, getApiOptions(req.body));
   } catch (e) {
     if (!res.headersSent) {
       res.status(500).json({ ok: false, error: e.message });
