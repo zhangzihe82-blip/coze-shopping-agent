@@ -1,0 +1,20 @@
+{
+  "workflow_id": "pricing_strategy",
+  "name": "科学定价策略分析",
+  "description": "输入商品成本+平台+竞品信息 → 市场比价 → 定价模型计算 → 促销节奏建议 → 利润优化方案",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {"node_id": "start", "type": "Start", "name": "定价需求输入", "position": {"x": 250, "y": 50}, "input_params": [{"name": "product_name", "type": "string", "description": "商品名称", "required": true}, {"name": "cost", "type": "string", "description": "成本（含运费）", "required": true}, {"name": "platform", "type": "string", "description": "销售平台", "required": true}, {"name": "competitor_price", "type": "string", "description": "竞品参考价（可选）", "required": false}], "output_params": [{"name": "product_name", "type": "string"}, {"name": "cost", "type": "string"}, {"name": "platform", "type": "string"}, {"name": "competitor_price", "type": "string"}]},
+    {"node_id": "market_price_search", "type": "HTTP", "name": "市场比价搜索", "position": {"x": 200, "y": 180}, "plugin": "web_search", "search_query": "{{product_name}} {{platform}} 价格 多少钱 2025", "max_results": 8,
+      "input_params": [{"name": "product_name", "type": "string", "source": "start.product_name"}, {"name": "platform", "type": "string", "source": "start.platform"}], "output_params": [{"name": "market_prices", "type": "array"}]},
+    {"node_id": "fee_calculator", "type": "Code", "name": "平台费用计算", "position": {"x": 350, "y": 180}, "code": "function calculate(cost, platform) {\n  const fees = { '抖音': { commission: 0.05, adCost: 0.15 }, '淘宝': { commission: 0.03, adCost: 0.10 }, '拼多多': { commission: 0.006, adCost: 0.08 }, '京东': { commission: 0.08, adCost: 0.12 } };\n  const pf = fees[platform] || { commission: 0.05, adCost: 0.10 };\n  const costNum = parseFloat(cost.replace(/[^0-9.]/g, ''));\n  return { platformFee: costNum * pf.commission, adBudget: costNum * pf.adCost, totalExtra: costNum * (pf.commission + pf.adCost) };\n}\nreturn { fee_breakdown: JSON.stringify(calculate(input.cost, input.platform)) };",
+      "input_params": [{"name": "cost", "type": "string", "source": "start.cost"}, {"name": "platform", "type": "string", "source": "start.platform"}], "output_params": [{"name": "fee_breakdown", "type": "string"}]},
+    {"node_id": "pricing_engine", "type": "LLM", "name": "定价策略引擎", "position": {"x": 275, "y": 340}, "model": "doubao-pro-128k", "temperature": 0.4, "max_tokens": 5000,
+      "prompt_template": "你是电商定价策略专家。基于以下信息制定科学定价方案。\n\n商品：{{product_name}}\n成本：{{cost}}\n平台：{{platform}}\n竞品价：{{competitor_price}}\n市场比价：{{market_price_search.market_prices}}\n平台费用：{{fee_calculator.fee_breakdown}}\n\n输出：\n## 📊 竞争定价分析\n   - 市场均价区间\n   - 竞品定价策略分析\n## 💰 定价方案（3套）\n   - 低价引流方案（利润率X%）\n   - 均衡盈利方案（利润率Y%）\n   - 高价品牌方案（利润率Z%）\n## 📈 促销节奏建议\n   - 日常价 / 活动价 / 清仓价\n   - 优惠券策略\n   - 满减/捆绑策略\n## 🔄 动态调价策略\n## 🎯 最终推荐方案",
+      "input_params": [{"name": "product_name", "type": "string", "source": "start.product_name"}, {"name": "cost", "type": "string", "source": "start.cost"}, {"name": "platform", "type": "string", "source": "start.platform"}, {"name": "competitor_price", "type": "string", "source": "start.competitor_price"}, {"name": "market_prices", "type": "array", "source": "market_price_search.market_prices"}, {"name": "fee_breakdown", "type": "string", "source": "fee_calculator.fee_breakdown"}],
+      "output_params": [{"name": "pricing_result", "type": "string"}]},
+    {"node_id": "end", "type": "End", "name": "输出定价方案", "position": {"x": 275, "y": 500}, "output_params": [{"name": "final_result", "type": "string", "source": "pricing_engine.pricing_result"}]}
+  ],
+  "edges": [{"source": "start", "target": "market_price_search"}, {"source": "start", "target": "fee_calculator"}, {"source": "market_price_search", "target": "pricing_engine"}, {"source": "fee_calculator", "target": "pricing_engine"}, {"source": "pricing_engine", "target": "end"}]
+}

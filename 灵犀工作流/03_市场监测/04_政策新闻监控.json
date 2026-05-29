@@ -1,0 +1,18 @@
+{
+  "workflow_id": "policy_monitor",
+  "name": "平台政策新闻监控",
+  "description": "监控各电商平台政策变化：规则更新/大促活动/处罚案例/行业法规 按平台分类输出政策简报",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {"node_id": "start", "type": "Start", "name": "监控触发", "position": {"x": 250, "y": 50}, "input_params": [{"name": "platforms", "type": "array", "description": "监控平台", "required": false, "default": ["抖音电商","淘宝天猫","京东","拼多多","小红书电商"]}, {"name": "policy_types", "type": "array", "description": "政策类型", "required": false, "default": ["规则变更","大促活动","处罚案例","行业法规"]}], "output_params": [{"name": "platforms", "type": "array"}, {"name": "policy_types", "type": "array"}]},
+    {"node_id": "policy_search", "type": "HTTP", "name": "政策新闻搜索", "position": {"x": 250, "y": 180}, "plugin": "web_search", "search_query": "电商平台 政策 新规 规则变更 大促 处罚 法规 2025 2026", "max_results": 20,
+      "input_params": [{"name": "platforms", "type": "array", "source": "start.platforms"}], "output_params": [{"name": "policy_data", "type": "array"}]},
+    {"node_id": "policy_analyzer", "type": "LLM", "name": "政策分析器", "position": {"x": 250, "y": 330}, "model": "doubao-pro-128k", "temperature": 0.3, "max_tokens": 6000,
+      "prompt_template": "你是电商政策分析专家。分析以下政策新闻生成简报。\n\n监控平台：{{platforms}}\n政策类型：{{policy_types}}\n原始数据：{{policy_search.policy_data}}\n\n按平台分类输出：\n# 📋 平台政策简报\n\n对每个平台输出：\n## [平台名]\n### 🔴 重要变更（影响大）\n### 🟡 一般更新（需关注）\n### 🟢 促销活动\n### ⚠️ 处罚案例警示\n\n最后：\n## 📊 跨平台趋势总结\n## 💡 应对建议",
+      "input_params": [{"name": "platforms", "type": "array", "source": "start.platforms"}, {"name": "policy_types", "type": "array", "source": "start.policy_types"}, {"name": "policy_data", "type": "array", "source": "policy_search.policy_data"}],
+      "output_params": [{"name": "policy_brief", "type": "string"}]},
+    {"node_id": "end", "type": "End", "name": "输出政策简报", "position": {"x": 250, "y": 480}, "output_params": [{"name": "final_brief", "type": "string", "source": "policy_analyzer.policy_brief"}]}
+  ],
+  "edges": [{"source": "start", "target": "policy_search"}, {"source": "policy_search", "target": "policy_analyzer"}, {"source": "policy_analyzer", "target": "end"}]
+}

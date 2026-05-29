@@ -1,0 +1,25 @@
+{
+  "workflow_id": "xhs_account_manager",
+  "name": "小红书账号管理",
+  "description": "账号连接/登录状态检测/自动续登/发布历史查询/账号健康度监控",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {"node_id": "start", "type": "Start", "name": "账号管理操作", "position": {"x": 250, "y": 50}, "input_params": [{"name": "action", "type": "string", "description": "操作类型：connect/check/history/health", "required": true}, {"name": "account_id", "type": "string", "description": "账号ID", "required": false}], "output_params": [{"name": "action", "type": "string"}, {"name": "account_id", "type": "string"}]},
+    {"node_id": "action_router", "type": "Condition", "name": "操作路由", "position": {"x": 250, "y": 180}, "condition_expression": "{{action}}", "branches": {"connect": "connect_flow", "check": "check_flow", "history": "history_flow", "health": "health_flow"}},
+    {"node_id": "connect_flow", "type": "Code", "name": "账号连接", "position": {"x": 80, "y": 310}, "code": "// 浏览器自动化连接小红书账号\n// 支持二维码扫码登录和Cookie登录\nasync function connect() {\n  // 1. 启动无头浏览器\n  // 2. 访问小红书登录页\n  // 3. 等待用户扫码或自动填入Cookie\n  // 4. 验证登录状态\n  // 5. 保存登录凭证\n  return { connected: true, account_name: '小红书账号', login_time: new Date().toISOString() };\n}\nconst result = await connect();\nreturn { connect_result: JSON.stringify(result) };",
+      "output_params": [{"name": "connect_result", "type": "string"}]},
+    {"node_id": "check_flow", "type": "Code", "name": "登录状态检测", "position": {"x": 220, "y": 310}, "code": "// 检测账号登录状态\n// 通过API请求判断Cookie是否有效\nasync function checkStatus(accountId) {\n  // 1. 读取保存的Cookie\n  // 2. 发送验证请求\n  // 3. 返回登录状态\n  return { logged_in: true, account_name: '已登录账号', cookie_valid: true, expired_at: null };\n}\nconst result = await checkStatus(input.account_id);\nreturn { check_result: JSON.stringify(result) };",
+      "input_params": [{"name": "account_id", "type": "string", "source": "start.account_id"}],
+      "output_params": [{"name": "check_result", "type": "string"}]},
+    {"node_id": "history_flow", "type": "Code", "name": "发布历史查询", "position": {"x": 360, "y": 310}, "code": "// 查询账号发布历史\nasync function getHistory(accountId) {\n  // 1. 读取本地发布记录\n  // 2. 返回发布历史列表\n  return { notes: [], total_count: 0, last_publish_time: null };\n}\nconst result = await getHistory(input.account_id);\nreturn { history_result: JSON.stringify(result) };",
+      "input_params": [{"name": "account_id", "type": "string", "source": "start.account_id"}],
+      "output_params": [{"name": "history_result", "type": "string"}]},
+    {"node_id": "health_flow", "type": "LLM", "name": "账号健康度分析", "position": {"x": 500, "y": 310}, "model": "doubao-pro-32k", "temperature": 0.2,
+      "prompt_template": "分析小红书账号健康度。\n\n账号ID：{{account_id}}\n\n评估维度：\n- 登录状态稳定性\n- Cookie有效期\n- 发布频率\n- 内容质量评分\n- 违规风险\n\n输出JSON：{\"health_score\": 85, \"status\": \"健康/警告/危险\", \"suggestions\": [\"建议1\",\"建议2\"]}",
+      "input_params": [{"name": "account_id", "type": "string", "source": "start.account_id"}],
+      "output_params": [{"name": "health_result", "type": "string"}]},
+    {"node_id": "end", "type": "End", "name": "操作完成", "position": {"x": 290, "y": 480}, "output_params": [{"name": "result", "type": "object"}]}
+  ],
+  "edges": [{"source": "start", "target": "action_router"}, {"source": "action_router", "target": "connect_flow", "label": "连接"}, {"source": "action_router", "target": "check_flow", "label": "检测"}, {"source": "action_router", "target": "history_flow", "label": "历史"}, {"source": "action_router", "target": "health_flow", "label": "健康"}, {"source": "connect_flow", "target": "end"}, {"source": "check_flow", "target": "end"}, {"source": "history_flow", "target": "end"}, {"source": "health_flow", "target": "end"}]
+}

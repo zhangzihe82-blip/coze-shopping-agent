@@ -1,0 +1,22 @@
+{
+  "workflow_id": "operations_qa",
+  "name": "运营智能问答",
+  "description": "电商运营知识问答：商品定位/平台规则/营销策略/开店指南/流量获取 可联网搜索最新政策和案例",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {"node_id": "start", "type": "Start", "name": "问题输入", "position": {"x": 250, "y": 50}, "input_params": [{"name": "question", "type": "string", "description": "运营相关问题", "required": true}], "output_params": [{"name": "question", "type": "string"}]},
+    {"node_id": "intent_classify", "type": "LLM", "name": "问题意图分类", "position": {"x": 250, "y": 170}, "model": "doubao-pro-32k", "temperature": 0.2,
+      "prompt_template": "分析电商运营问题的意图类型。\n\n问题：{{question}}\n\n输出JSON：{\"category\": \"商品定位/平台规则/营销策略/开店指南/流量获取/定价策略/其他\", \"need_search\": true/false, \"search_query\": \"搜索关键词\", \"complexity\": \"简单/中等/复杂\"}",
+      "input_params": [{"name": "question", "type": "string", "source": "start.question"}], "output_params": [{"name": "intent_result", "type": "object"}]},
+    {"node_id": "need_search_check", "type": "Condition", "name": "是否需要联网", "position": {"x": 250, "y": 300}, "condition_expression": "{{intent_classify.intent_result.need_search}} == true", "true_branch": "web_search", "false_branch": "answer_engine"},
+    {"node_id": "web_search", "type": "HTTP", "name": "联网搜索", "position": {"x": 120, "y": 420}, "plugin": "web_search", "search_query": "{{intent_classify.intent_result.search_query}}", "max_results": 5,
+      "input_params": [{"name": "search_query", "type": "string", "source": "intent_classify.intent_result.search_query"}], "output_params": [{"name": "search_data", "type": "array"}]},
+    {"node_id": "answer_engine", "type": "LLM", "name": "专业问答引擎", "position": {"x": 250, "y": 550}, "model": "doubao-pro-128k", "temperature": 0.6, "max_tokens": 4000,
+      "prompt_template": "你是资深电商运营顾问。基于以下信息给出专业解答。\n\n用户问题：{{question}}\n问题类型：{{intent_classify.intent_result.category}}\n联网搜索结果：{{web_search.search_data}}\n\n回答要求：\n1. 先给出核心结论（一句话）\n2. 详细解释（分点说明）\n3. 提供可操作的建议/步骤\n4. 如涉及平台规则，注明适用平台和时效性\n5. 推荐延伸阅读方向\n\n风格：专业实用、条理清晰、接地气。",
+      "input_params": [{"name": "question", "type": "string", "source": "start.question"}, {"name": "intent_category", "type": "string", "source": "intent_classify.intent_result.category"}, {"name": "search_data", "type": "array", "source": "web_search.search_data"}],
+      "output_params": [{"name": "answer", "type": "string"}]},
+    {"node_id": "end", "type": "End", "name": "输出答案", "position": {"x": 250, "y": 710}, "output_params": [{"name": "final_answer", "type": "string", "source": "answer_engine.answer"}]}
+  ],
+  "edges": [{"source": "start", "target": "intent_classify"}, {"source": "intent_classify", "target": "need_search_check"}, {"source": "need_search_check", "target": "web_search", "label": "需要搜索"}, {"source": "need_search_check", "target": "answer_engine", "label": "已有知识"}, {"source": "web_search", "target": "answer_engine"}, {"source": "answer_engine", "target": "end"}]
+}

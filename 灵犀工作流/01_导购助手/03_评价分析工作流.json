@@ -1,0 +1,18 @@
+{
+  "workflow_id": "review_analysis",
+  "name": "商品评价聚合分析",
+  "description": "接收商品名称 → 联网搜索真实评价 → 情感分析 → 优缺点聚合 → 可信度评估 → 购买建议",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {"node_id": "start", "type": "Start", "name": "评价查询输入", "position": {"x": 250, "y": 50}, "input_params": [{"name": "product_name", "type": "string", "description": "要查询的商品名称", "required": true}, {"name": "platforms", "type": "array", "description": "平台过滤（可选）：淘宝/京东/拼多多/小红书", "required": false}], "output_params": [{"name": "product_name", "type": "string"}, {"name": "platforms", "type": "array"}]},
+    {"node_id": "search_reviews", "type": "HTTP", "name": "搜索真实评价", "position": {"x": 250, "y": 180}, "plugin": "web_search", "search_query": "{{product_name}} 真实评价 用户评测 优缺点 值得买吗", "max_results": 10,
+      "input_params": [{"name": "product_name", "type": "string", "source": "start.product_name"}], "output_params": [{"name": "review_data", "type": "array"}]},
+    {"node_id": "sentiment_analysis", "type": "LLM", "name": "情感分析与聚合", "position": {"x": 250, "y": 330}, "model": "doubao-pro-128k", "temperature": 0.3, "max_tokens": 4096,
+      "prompt_template": "你是评价分析专家。分析以下商品评价数据，生成聚合分析报告。\n\n商品：{{product_name}}\n评价数据：{{search_reviews.review_data}}\n\n分析维度：\n1. ✅ 好评聚合（占比、主要优点Top5）\n2. ❌ 差评聚合（占比、主要槽点Top5）\n3. 🤔 中立评价观点\n4. 📊 可信度评估（是否有刷单嫌疑、评价真实性判断）\n5. 🎯 购买建议（什么人群适合/不适合）\n6. ⚠️ 避坑指南\n\n用自然语言输出，像朋友聊天般讲述。",
+      "input_params": [{"name": "product_name", "type": "string", "source": "start.product_name"}, {"name": "review_data", "type": "array", "source": "search_reviews.review_data"}],
+      "output_params": [{"name": "analysis_result", "type": "string"}]},
+    {"node_id": "end", "type": "End", "name": "输出分析结果", "position": {"x": 250, "y": 480}, "output_params": [{"name": "final_output", "type": "string", "source": "sentiment_analysis.analysis_result"}]}
+  ],
+  "edges": [{"source": "start", "target": "search_reviews"}, {"source": "search_reviews", "target": "sentiment_analysis"}, {"source": "sentiment_analysis", "target": "end"}]
+}

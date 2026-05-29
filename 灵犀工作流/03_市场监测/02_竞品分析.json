@@ -1,0 +1,20 @@
+{
+  "workflow_id": "competitor_analysis",
+  "name": "竞品深度分析",
+  "description": "输入竞品店铺/品牌 → 全网数据采集 → 多维度分析 → SWOT分析 → 竞争策略建议",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {"node_id": "start", "type": "Start", "name": "竞品分析输入", "position": {"x": 250, "y": 50}, "input_params": [{"name": "competitor_name", "type": "string", "description": "竞品名称/店铺名/品牌名", "required": true}, {"name": "platform", "type": "string", "description": "分析平台", "required": false}], "output_params": [{"name": "competitor_name", "type": "string"}, {"name": "platform", "type": "string"}]},
+    {"node_id": "product_search", "type": "HTTP", "name": "商品信息搜索", "position": {"x": 120, "y": 180}, "plugin": "web_search", "search_query": "{{competitor_name}} 热销商品 价格 评价 销量", "max_results": 10,
+      "input_params": [{"name": "competitor_name", "type": "string", "source": "start.competitor_name"}], "output_params": [{"name": "product_data", "type": "array"}]},
+    {"node_id": "brand_search", "type": "HTTP", "name": "品牌舆情搜索", "position": {"x": 380, "y": 180}, "plugin": "web_search", "search_query": "{{competitor_name}} 品牌 口碑 评价 投诉 新闻", "max_results": 10,
+      "input_params": [{"name": "competitor_name", "type": "string", "source": "start.competitor_name"}], "output_params": [{"name": "brand_data", "type": "array"}]},
+    {"node_id": "analysis_engine", "type": "LLM", "name": "竞品分析引擎", "position": {"x": 250, "y": 340}, "model": "doubao-pro-128k", "temperature": 0.4, "max_tokens": 6000,
+      "prompt_template": "你是电商竞品分析专家。基于以下信息生成深度分析报告。\n\n竞品：{{competitor_name}}\n平台：{{platform}}\n商品数据：{{product_search.product_data}}\n舆情数据：{{brand_search.brand_data}}\n\n输出：\n## 📋 竞品概况\n   - 品牌定位 / 目标人群 / 价格带\n## 📊 产品矩阵分析\n   - 爆款产品 / 引流款 / 利润款\n   - 产品结构与差异化\n## 💰 价格策略分析\n## 📣 营销策略分析\n   - 推广渠道 / 内容策略 / 促销节奏\n## 🔍 SWOT分析\n   - 优势 / 劣势 / 机会 / 威胁\n## 🎯 竞争策略建议\n   - 差异化方向 / 可复制策略 / 应避免事项\n## 📈 关键数据指标对比",
+      "input_params": [{"name": "competitor_name", "type": "string", "source": "start.competitor_name"}, {"name": "platform", "type": "string", "source": "start.platform"}, {"name": "product_data", "type": "array", "source": "product_search.product_data"}, {"name": "brand_data", "type": "array", "source": "brand_search.brand_data"}],
+      "output_params": [{"name": "analysis_report", "type": "string"}]},
+    {"node_id": "end", "type": "End", "name": "输出竞品报告", "position": {"x": 250, "y": 500}, "output_params": [{"name": "final_report", "type": "string", "source": "analysis_engine.analysis_report"}]}
+  ],
+  "edges": [{"source": "start", "target": "product_search"}, {"source": "start", "target": "brand_search"}, {"source": "product_search", "target": "analysis_engine"}, {"source": "brand_search", "target": "analysis_engine"}, {"source": "analysis_engine", "target": "end"}]
+}

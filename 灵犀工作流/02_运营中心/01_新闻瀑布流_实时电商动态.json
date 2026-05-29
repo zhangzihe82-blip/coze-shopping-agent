@@ -1,0 +1,22 @@
+{
+  "workflow_id": "news_feed",
+  "name": "实时电商动态瀑布流",
+  "description": "多平台电商新闻采集 → 按平台分类 → 提取关键信息 → 分析影响 → 生成瀑布流展示 支持平台：抖音/淘宝/京东/拼多多/小红书",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {"node_id": "start", "type": "Start", "name": "新闻采集触发", "position": {"x": 250, "y": 50}, "input_params": [{"name": "platform_filter", "type": "string", "description": "平台筛选：全部/抖音/淘宝/京东/拼多多/小红书", "required": false, "default": "全部"}, {"name": "max_items", "type": "number", "description": "最大条数", "required": false, "default": 20}], "output_params": [{"name": "platform_filter", "type": "string"}, {"name": "max_items", "type": "number"}]},
+    {"node_id": "multi_platform_search", "type": "HTTP", "name": "多平台新闻搜索", "position": {"x": 250, "y": 180}, "plugin": "web_search", "search_query": "电商平台最新动态 抖音 淘宝 京东 拼多多 小红书 2025 2026", "max_results": 30,
+      "input_params": [{"name": "max_items", "type": "number", "source": "start.max_items"}], "output_params": [{"name": "raw_news", "type": "array"}]},
+    {"node_id": "news_analyzer", "type": "LLM", "name": "新闻分类与分析", "position": {"x": 250, "y": 330}, "model": "doubao-pro-128k", "temperature": 0.3, "max_tokens": 6000,
+      "prompt_template": "你是电商新闻分析器。分析以下新闻数据并生成结构化输出。\n\n原始新闻：{{multi_platform_search.raw_news}}\n筛选平台：{{platform_filter}}\n最大条数：{{max_items}}\n\n对每条新闻提取：\n{\n  \"platform\": \"平台名\",\n  \"category\": \"活动/政策/新品/趋势/其他\",\n  \"title\": \"新闻标题\",\n  \"summary\": \"50字摘要\",\n  \"impact\": \"对电商从业者的影响分析\",\n  \"time\": \"发布时间\",\n  \"action_items\": [\"建议行动\"]\n}\n\n按时间倒序排列，相同平台聚合展示。",
+      "input_params": [{"name": "raw_news", "type": "array", "source": "multi_platform_search.raw_news"}, {"name": "platform_filter", "type": "string", "source": "start.platform_filter"}, {"name": "max_items", "type": "number", "source": "start.max_items"}],
+      "output_params": [{"name": "analyzed_news", "type": "array"}, {"name": "category_stats", "type": "object"}]},
+    {"node_id": "format_output", "type": "LLM", "name": "格式化瀑布流输出", "position": {"x": 250, "y": 490}, "model": "doubao-pro-32k", "temperature": 0.3,
+      "prompt_template": "将以下结构化新闻数据格式化为瀑布流展示数据。\n\n新闻数据：{{news_analyzer.analyzed_news}}\n分类统计：{{news_analyzer.category_stats}}\n\n输出JSON数组，每个元素包含：\n{\n  \"id\": \"唯一ID\",\n  \"platform\": \"平台\",\n  \"category\": \"分类\",\n  \"title\": \"标题\",\n  \"summary\": \"摘要\",\n  \"impact\": \"影响\",\n  \"time\": \"时间\",\n  \"platformClass\": \"CSS类名\"\n}",
+      "input_params": [{"name": "analyzed_news", "type": "array", "source": "news_analyzer.analyzed_news"}, {"name": "category_stats", "type": "object", "source": "news_analyzer.category_stats"}],
+      "output_params": [{"name": "formatted_items", "type": "array"}]},
+    {"node_id": "end", "type": "End", "name": "输出瀑布流数据", "position": {"x": 250, "y": 640}, "output_params": [{"name": "items", "type": "array", "source": "format_output.formatted_items"}, {"name": "stats", "type": "object", "source": "news_analyzer.category_stats"}]}
+  ],
+  "edges": [{"source": "start", "target": "multi_platform_search"}, {"source": "multi_platform_search", "target": "news_analyzer"}, {"source": "news_analyzer", "target": "format_output"}, {"source": "format_output", "target": "end"}]
+}

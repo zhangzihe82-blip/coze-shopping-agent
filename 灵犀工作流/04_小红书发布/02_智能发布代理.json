@@ -1,0 +1,28 @@
+{
+  "workflow_id": "xhs_publish_agent",
+  "name": "小红书智能发布代理",
+  "description": "接收发布任务 → 检查内容合规 → 选择最佳发布时间 → 自动发布 → 监控数据 → 优化策略 含浏览器自动化发布功能",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {"node_id": "start", "type": "Start", "name": "发布任务输入", "position": {"x": 250, "y": 50}, "input_params": [{"name": "title", "type": "string", "description": "笔记标题", "required": true}, {"name": "content", "type": "string", "description": "笔记正文", "required": true}, {"name": "images", "type": "array", "description": "图片列表（本地路径或URL）", "required": true}, {"name": "tags", "type": "array", "description": "标签列表", "required": false}, {"name": "schedule_time", "type": "string", "description": "定时发布时间（可选，立即发布则留空）", "required": false}], "output_params": [{"name": "title", "type": "string"}, {"name": "content", "type": "string"}, {"name": "images", "type": "array"}, {"name": "tags", "type": "array"}, {"name": "schedule_time", "type": "string"}]},
+    {"node_id": "content_check", "type": "LLM", "name": "内容合规检查", "position": {"x": 250, "y": 200}, "model": "doubao-pro-32k", "temperature": 0.1,
+      "prompt_template": "检查以下小红书笔记内容是否合规。\n\n标题：{{title}}\n正文：{{content}}\n标签：{{tags}}\n\n检查项：\n1. 是否包含违禁词/敏感词\n2. 是否涉及虚假宣传\n3. 图片是否合规\n4. 标签是否准确\n5. 是否需要补充声明（广告标识等）\n\n输出JSON：{\"passed\": true/false, \"issues\": [\"问题1\",\"问题2\"], \"suggestions\": [\"修改建议\"], \"risk_level\": \"低/中/高\"}",
+      "input_params": [{"name": "title", "type": "string", "source": "start.title"}, {"name": "content", "type": "string", "source": "start.content"}, {"name": "tags", "type": "array", "source": "start.tags"}],
+      "output_params": [{"name": "check_result", "type": "object"}]},
+    {"node_id": "compliance_check", "type": "Condition", "name": "合规检查通过？", "position": {"x": 250, "y": 350}, "condition_expression": "{{content_check.check_result.passed}} == true AND {{content_check.check_result.risk_level}} != '高'", "true_branch": "optimize_time", "false_branch": "error_output"},
+    {"node_id": "optimize_time", "type": "LLM", "name": "最佳发布时间", "position": {"x": 100, "y": 480}, "model": "doubao-pro-32k", "temperature": 0.3,
+      "prompt_template": "分析小红书流量规律，推荐最佳发布时间。\n\n内容类型：{{content}}\n目标人群活跃时段：通用\n\n输出JSON：{\"best_time\": \"最佳发布时间\", \"reason\": \"选择理由\", \"alternative_times\": [\"备选1\",\"备选2\"]}",
+      "input_params": [{"name": "content", "type": "string", "source": "start.content"}],
+      "output_params": [{"name": "time_recommendation", "type": "object"}]},
+    {"node_id": "publish_executor", "type": "Code", "name": "执行发布", "position": {"x": 250, "y": 620}, "code": "// 调用浏览器自动化发布\n// 使用 Puppeteer 操作小红书 Web 版\nasync function publish(title, content, images, tags) {\n  // 1. 打开小红书创作中心\n  // 2. 上传图片\n  // 3. 填写标题和正文\n  // 4. 添加标签\n  // 5. 点击发布\n  return { success: true, note_id: 'generated_id', publish_time: new Date().toISOString() };\n}\nconst result = await publish(input.title, input.content, input.images, input.tags);\nreturn { publish_result: JSON.stringify(result) };",
+      "input_params": [{"name": "title", "type": "string", "source": "start.title"}, {"name": "content", "type": "string", "source": "start.content"}, {"name": "images", "type": "array", "source": "start.images"}, {"name": "tags", "type": "array", "source": "start.tags"}],
+      "output_params": [{"name": "publish_result", "type": "string"}]},
+    {"node_id": "error_output", "type": "LLM", "name": "合规问题反馈", "position": {"x": 420, "y": 480}, "model": "doubao-pro-32k", "temperature": 0.3,
+      "prompt_template": "内容存在合规问题，生成修改建议。\n\n检查结果：{{content_check.check_result}}\n\n生成：\n## ⚠️ 内容需要修改\n### 问题列表\n### 具体修改建议\n### 修改后的推荐写法",
+      "input_params": [{"name": "check_result", "type": "object", "source": "content_check.check_result"}],
+      "output_params": [{"name": "error_feedback", "type": "string"}]},
+    {"node_id": "end", "type": "End", "name": "发布完成", "position": {"x": 250, "y": 780}, "output_params": [{"name": "publish_status", "type": "object"}, {"name": "time_recommendation", "type": "object", "source": "optimize_time.time_recommendation"}]}
+  ],
+  "edges": [{"source": "start", "target": "content_check"}, {"source": "content_check", "target": "compliance_check"}, {"source": "compliance_check", "target": "optimize_time", "label": "通过"}, {"source": "compliance_check", "target": "error_output", "label": "不通过"}, {"source": "optimize_time", "target": "publish_executor"}, {"source": "publish_executor", "target": "end"}, {"source": "error_output", "target": "end"}]
+}

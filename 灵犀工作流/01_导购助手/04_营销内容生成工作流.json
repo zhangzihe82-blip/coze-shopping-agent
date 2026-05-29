@@ -1,0 +1,39 @@
+{
+  "workflow_id": "marketing_content",
+  "name": "营销内容生成",
+  "description": "接收商品信息 → 选择平台风格 → 生成适配平台的内容：短视频脚本/直播话术/小红书文案/朋友圈文案",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {"node_id": "start", "type": "Start", "name": "内容需求输入", "position": {"x": 250, "y": 50}, "input_params": [{"name": "product_info", "type": "string", "description": "商品描述和卖点", "required": true}, {"name": "platform", "type": "string", "description": "目标平台：抖音/小红书/淘宝/朋友圈", "required": true}, {"name": "target_audience", "type": "string", "description": "目标人群", "required": false}], "output_params": [{"name": "product_info", "type": "string"}, {"name": "platform", "type": "string"}, {"name": "target_audience", "type": "string"}]},
+    {"node_id": "platform_router", "type": "Condition", "name": "平台路由", "position": {"x": 250, "y": 180}, "condition_expression": "{{platform}}", "branches": {"抖音": "douyin_gen", "小红书": "xhs_gen", "淘宝": "taobao_gen", "朋友圈": "wechat_gen"}},
+    {"node_id": "douyin_gen", "type": "LLM", "name": "抖音内容生成", "position": {"x": 80, "y": 320}, "model": "doubao-pro-128k", "temperature": 0.9, "max_tokens": 3000,
+      "prompt_template": "你是抖音爆款内容创作专家。为以下商品创作短视频脚本。\n\n商品：{{product_info}}\n目标人群：{{target_audience}}\n\n格式：\n## 🎬 短视频脚本\n### 标题（3秒抓眼球）\n### 黄金3秒开场白\n### 脚本正文（含画面描述、口播文案、时长标注）\n### BGM推荐\n### 评论区互动引导\n### 发布文案 + 推荐Hashtag\n\n创作要点：口语化、节奏快、善用悬念和反转。",
+      "input_params": [{"name": "product_info", "type": "string", "source": "start.product_info"}, {"name": "target_audience", "type": "string", "source": "start.target_audience"}],
+      "output_params": [{"name": "generated_content", "type": "string"}]},
+    {"node_id": "xhs_gen", "type": "LLM", "name": "小红书内容生成", "position": {"x": 220, "y": 320}, "model": "doubao-pro-128k", "temperature": 0.85, "max_tokens": 3000,
+      "prompt_template": "你是小红书爆款笔记创作专家。为以下商品创作小红书文案。\n\n商品：{{product_info}}\n目标人群：{{target_audience}}\n\n格式：\n## 📕 小红书笔记\n### 标题（吸引点击 + emoji）\n### 正文（段落分明、emoji点缀、语气亲切）\n### 产品卖点提炼\n### 使用场景描述\n### 标签推荐（5-8个精准标签）\n### 封面图建议\n\n风格：真实种草感、闺蜜分享风。",
+      "input_params": [{"name": "product_info", "type": "string", "source": "start.product_info"}, {"name": "target_audience", "type": "string", "source": "start.target_audience"}],
+      "output_params": [{"name": "generated_content", "type": "string"}]},
+    {"node_id": "taobao_gen", "type": "LLM", "name": "淘宝内容生成", "position": {"x": 360, "y": 320}, "model": "doubao-pro-128k", "temperature": 0.7, "max_tokens": 3000,
+      "prompt_template": "你是淘宝电商文案专家。为以下商品创作淘宝详情页文案。\n\n商品：{{product_info}}\n目标人群：{{target_audience}}\n\n格式：\n## 🛒 淘宝文案\n### 宝贝标题（关键词优化）\n### 副标题（一句话卖点）\n### 详情页文案框架\n### 5张主图创意说明\n### 买家秀引导文案\n\n要点：SEO友好、突出差异化卖点、打消购买疑虑。",
+      "input_params": [{"name": "product_info", "type": "string", "source": "start.product_info"}, {"name": "target_audience", "type": "string", "source": "start.target_audience"}],
+      "output_params": [{"name": "generated_content", "type": "string"}]},
+    {"node_id": "wechat_gen", "type": "LLM", "name": "朋友圈文案生成", "position": {"x": 500, "y": 320}, "model": "doubao-pro-128k", "temperature": 0.8, "max_tokens": 2000,
+      "prompt_template": "你是微信朋友圈营销专家。为以下商品创作朋友圈推广文案。\n\n商品：{{product_info}}\n目标人群：{{target_audience}}\n\n格式：\n## 📱 朋友圈文案\n### 短文案（140字以内，适合直接发）\n### 长文案（300字，适合配图）\n### 配图建议\n### 互动话术\n\n风格：真实自然、不硬广、生活化分享。",
+      "input_params": [{"name": "product_info", "type": "string", "source": "start.product_info"}, {"name": "target_audience", "type": "string", "source": "start.target_audience"}],
+      "output_params": [{"name": "generated_content", "type": "string"}]},
+    {"node_id": "end", "type": "End", "name": "输出内容", "position": {"x": 290, "y": 480}, "output_params": [{"name": "final_content", "type": "string"}]}
+  ],
+  "edges": [
+    {"source": "start", "target": "platform_router"},
+    {"source": "platform_router", "target": "douyin_gen", "label": "抖音"},
+    {"source": "platform_router", "target": "xhs_gen", "label": "小红书"},
+    {"source": "platform_router", "target": "taobao_gen", "label": "淘宝"},
+    {"source": "platform_router", "target": "wechat_gen", "label": "朋友圈"},
+    {"source": "douyin_gen", "target": "end"},
+    {"source": "xhs_gen", "target": "end"},
+    {"source": "taobao_gen", "target": "end"},
+    {"source": "wechat_gen", "target": "end"}
+  ]
+}

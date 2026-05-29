@@ -1,0 +1,21 @@
+{
+  "workflow_id": "xhs_copy_generation",
+  "name": "小红书AI文案生成",
+  "description": "上传商品素材图片 → 识别图片内容 → 结合用户输入 → 生成多套小红书风格文案 → 标签推荐",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {"node_id": "start", "type": "Start", "name": "素材输入", "position": {"x": 250, "y": 50}, "input_params": [{"name": "images", "type": "array", "description": "商品素材图片（1-9张）", "required": true}, {"name": "product_desc", "type": "string", "description": "商品描述/卖点补充", "required": true}, {"name": "style", "type": "string", "description": "文案风格：种草/测评/vlog/教程/日常", "required": false, "default": "种草"}, {"name": "hashtag_count", "type": "number", "description": "标签数量", "required": false, "default": 5}], "output_params": [{"name": "images", "type": "array"}, {"name": "product_desc", "type": "string"}, {"name": "style", "type": "string"}, {"name": "hashtag_count", "type": "number"}]},
+    {"node_id": "image_analyzer", "type": "LLM", "name": "图片内容识别", "position": {"x": 250, "y": 190}, "model": "doubao-vision-pro-32k", "temperature": 0.3,
+      "prompt_template": "分析以下商品图片，提取视觉信息。\n\n图片数量：{{images.length}}\n\n对每张图片提取：\n- 画面主题\n- 色彩风格\n- 商品位置\n- 氛围调性\n- 适合的场景标签",
+      "input_params": [{"name": "images", "type": "array", "source": "start.images"}], "output_params": [{"name": "image_analysis", "type": "object"}]},
+    {"node_id": "trend_search", "type": "HTTP", "name": "热点话题搜索", "position": {"x": 420, "y": 190}, "plugin": "web_search", "search_query": "小红书 热门话题 hashtag 流行趋势 爆款笔记", "max_results": 5,
+      "output_params": [{"name": "trend_tags", "type": "array"}]},
+    {"node_id": "copy_generator", "type": "LLM", "name": "文案生成引擎", "position": {"x": 335, "y": 350}, "model": "doubao-pro-128k", "temperature": 0.85, "max_tokens": 4000,
+      "prompt_template": "你是小红书爆款文案创作专家。基于以下信息生成多套文案。\n\n图片分析：{{image_analyzer.image_analysis}}\n商品描述：{{product_desc}}\n文案风格：{{style}}\n热门标签：{{trend_search.trend_tags}}\n标签数量：{{hashtag_count}}\n\n生成3套文案方案：\n\n## 方案A：种草型\n适合美妆/好物推荐，突出使用体验\n\n## 方案B：干货型\n适合教程/攻略，突出实用价值\n\n## 方案C：生活型\n适合日常分享，突出真实感\n\n每套方案包含：\n- 标题（3个备选）\n- 正文（200-500字）\n- emoji点缀\n- 推荐标签（{{hashtag_count}}个）\n- 最佳发布时间建议",
+      "input_params": [{"name": "image_analysis", "type": "object", "source": "image_analyzer.image_analysis"}, {"name": "product_desc", "type": "string", "source": "start.product_desc"}, {"name": "style", "type": "string", "source": "start.style"}, {"name": "trend_tags", "type": "array", "source": "trend_search.trend_tags"}, {"name": "hashtag_count", "type": "number", "source": "start.hashtag_count"}],
+      "output_params": [{"name": "copy_options", "type": "array"}, {"name": "best_pick", "type": "number"}]},
+    {"node_id": "end", "type": "End", "name": "输出文案方案", "position": {"x": 335, "y": 510}, "output_params": [{"name": "copy_options", "type": "array", "source": "copy_generator.copy_options"}, {"name": "best_pick", "type": "number", "source": "copy_generator.best_pick"}]}
+  ],
+  "edges": [{"source": "start", "target": "image_analyzer"}, {"source": "start", "target": "trend_search"}, {"source": "image_analyzer", "target": "copy_generator"}, {"source": "trend_search", "target": "copy_generator"}, {"source": "copy_generator", "target": "end"}]
+}

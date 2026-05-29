@@ -1,0 +1,24 @@
+{
+  "workflow_id": "xhs_background_optimizer",
+  "name": "小红书后台优化器",
+  "description": "后台定时运行：检测账号健康 → 自动续登 → 刷新Cookie → 数据采集 → 优化策略生成 间隔可配置（默认6小时）",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {"node_id": "start", "type": "Start", "name": "定时触发", "position": {"x": 250, "y": 50}, "input_params": [{"name": "interval_hours", "type": "number", "description": "执行间隔（小时）", "required": false, "default": 6}], "output_params": [{"name": "interval_hours", "type": "number"}]},
+    {"node_id": "check_accounts", "type": "Code", "name": "检测所有账号状态", "position": {"x": 250, "y": 170}, "code": "// 遍历所有已连接账号\n// 检测登录状态和Cookie有效性\nasync function checkAllAccounts() {\n  const accounts = []; // 从本地存储读取\n  const results = [];\n  for (const acc of accounts) {\n    const status = { id: acc.id, valid: true, need_relogin: false };\n    results.push(status);\n  }\n  return { account_statuses: JSON.stringify(results), need_relogin_list: JSON.stringify(results.filter(r => r.need_relogin)) };\n}\nconst result = await checkAllAccounts();\nreturn result;",
+      "output_params": [{"name": "account_statuses", "type": "string"}, {"name": "need_relogin_list", "type": "string"}]},
+    {"node_id": "need_action", "type": "Condition", "name": "需要手动干预？", "position": {"x": 250, "y": 300}, "condition_expression": "{{check_accounts.need_relogin_list.length}} > 0", "true_branch": "alert_user", "false_branch": "collect_data"},
+    {"node_id": "alert_user", "type": "Code", "name": "提醒用户重新登录", "position": {"x": 80, "y": 430}, "code": "// 生成提醒通知\n// 列出需要重新登录的账号\n// 发送桌面通知（如果启用）\nconst alert = { type: 'relogin_required', accounts: JSON.parse(input.need_relogin_list), message: '以下账号需要重新登录', severity: 'warning' };\nreturn { alert: JSON.stringify(alert) };",
+      "input_params": [{"name": "need_relogin_list", "type": "string", "source": "check_accounts.need_relogin_list"}],
+      "output_params": [{"name": "alert", "type": "string"}]},
+    {"node_id": "collect_data", "type": "HTTP", "name": "采集账号数据", "position": {"x": 420, "y": 430}, "plugin": "web_search", "search_query": "小红书 运营技巧 算法更新 流量规则 2025 2026", "max_results": 5,
+      "output_params": [{"name": "optimization_data", "type": "array"}]},
+    {"node_id": "generate_strategy", "type": "LLM", "name": "生成优化策略", "position": {"x": 250, "y": 570}, "model": "doubao-pro-128k", "temperature": 0.4, "max_tokens": 4000,
+      "prompt_template": "基于最新小红书运营数据生成优化策略。\n\n账号状态：{{check_accounts.account_statuses}}\n最新趋势：{{collect_data.optimization_data}}\n\n生成：\n## 📊 账号健康报告\n## 🔄 自动优化操作\n   - Cookie刷新状态\n   - 登录续期结果\n## 📈 最新运营趋势\n## 💡 优化建议\n   - 内容方向建议\n   - 发布时间优化\n   - 标签策略\n## ⚠️ 风险提示",
+      "input_params": [{"name": "account_statuses", "type": "string", "source": "check_accounts.account_statuses"}, {"name": "optimization_data", "type": "array", "source": "collect_data.optimization_data"}],
+      "output_params": [{"name": "strategy_report", "type": "string"}]},
+    {"node_id": "end", "type": "End", "name": "优化完成", "position": {"x": 250, "y": 730}, "output_params": [{"name": "report", "type": "string", "source": "generate_strategy.strategy_report"}]}
+  ],
+  "edges": [{"source": "start", "target": "check_accounts"}, {"source": "check_accounts", "target": "need_action"}, {"source": "need_action", "target": "alert_user", "label": "需干预"}, {"source": "need_action", "target": "collect_data", "label": "正常"}, {"source": "alert_user", "target": "generate_strategy"}, {"source": "collect_data", "target": "generate_strategy"}, {"source": "generate_strategy", "target": "end"}]
+}

@@ -1,0 +1,25 @@
+{
+  "workflow_id": "service_reply",
+  "name": "智能客服话术生成",
+  "description": "选择场景 → 输入具体情况 → AI生成专业客服回复话术模板 支持：差评回复/退货退款/投诉处理/好评引导",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {"node_id": "start", "type": "Start", "name": "话术需求输入", "position": {"x": 250, "y": 50}, "input_params": [{"name": "scene", "type": "string", "description": "场景：badReview/refund/complaint/askReview", "required": true}, {"name": "context", "type": "string", "description": "具体情况描述", "required": true}], "output_params": [{"name": "scene", "type": "string"}, {"name": "context", "type": "string"}]},
+    {"node_id": "scene_router", "type": "Condition", "name": "场景路由", "position": {"x": 250, "y": 180}, "condition_expression": "{{scene}}", "branches": {"badReview": "bad_review_gen", "refund": "refund_gen", "complaint": "complaint_gen", "askReview": "ask_review_gen"}},
+    {"node_id": "bad_review_gen", "type": "LLM", "name": "差评回复生成", "position": {"x": 80, "y": 310}, "model": "doubao-pro-128k", "temperature": 0.6, "max_tokens": 2000,
+      "prompt_template": "你是专业电商客服专家。为以下差评生成回复话术。\n\n差评内容：{{context}}\n\n生成3套回复方案：\n\n## 方案一：真诚道歉型\n适合确实有问题的差评，态度诚恳\n\n## 方案二：专业解释型  \n适合存在误解的差评，温和澄清\n\n## 方案三：补偿挽留型\n适合严重问题，主动补偿\n\n每套方案包含：\n- 回复话术\n- 适用场景说明\n- 注意事项\n\n原则：不推卸责任、不情绪化、有具体解决方案、私下沟通优先。",
+      "input_params": [{"name": "context", "type": "string", "source": "start.context"}], "output_params": [{"name": "reply_script", "type": "string"}]},
+    {"node_id": "refund_gen", "type": "LLM", "name": "退货退款话术", "position": {"x": 220, "y": 310}, "model": "doubao-pro-128k", "temperature": 0.5, "max_tokens": 2000,
+      "prompt_template": "你是电商售后专家。为以下退货退款场景生成话术。\n\n情况：{{context}}\n\n生成：\n## 📋 处理流程\n## 💬 安抚话术（分角色：客服→买家）\n## 🤝 协商话术（减少损失）\n## 📝 售后处理模板\n## ⚠️ 注意事项（平台规则合规）\n\n要点：快速响应、情绪安抚、流程清晰、合规操作。",
+      "input_params": [{"name": "context", "type": "string", "source": "start.context"}], "output_params": [{"name": "reply_script", "type": "string"}]},
+    {"node_id": "complaint_gen", "type": "LLM", "name": "投诉处理话术", "position": {"x": 360, "y": 310}, "model": "doubao-pro-128k", "temperature": 0.5, "max_tokens": 2000,
+      "prompt_template": "你是电商危机处理专家。为以下投诉场景生成处理方案。\n\n投诉内容：{{context}}\n\n生成：\n## 🚨 紧急程度评估\n## 💬 首次回应话术\n## 📞 电话沟通脚本\n## 🤝 和解方案（多个梯度）\n## 📝 官方回复模板\n## ⚠️ 合规提醒\n\n原则：快速响应、真诚道歉、主动补偿、私下解决。",
+      "input_params": [{"name": "context", "type": "string", "source": "start.context"}], "output_params": [{"name": "reply_script", "type": "string"}]},
+    {"node_id": "ask_review_gen", "type": "LLM", "name": "好评引导话术", "position": {"x": 500, "y": 310}, "model": "doubao-pro-128k", "temperature": 0.7, "max_tokens": 2000,
+      "prompt_template": "你是电商转化专家。为以下场景生成好评引导话术。\n\n情况：{{context}}\n\n生成：\n## 📱 短信/私信模板（3套）\n## 🎁 好评返利方案设计\n## 💬 沟通话术（自然不僵硬）\n## 📸 引导买家晒图技巧\n## ⚠️ 平台合规提醒\n\n要点：自然不僵硬、符合平台规则、给买家创造价值感。",
+      "input_params": [{"name": "context", "type": "string", "source": "start.context"}], "output_params": [{"name": "reply_script", "type": "string"}]},
+    {"node_id": "end", "type": "End", "name": "输出话术", "position": {"x": 290, "y": 470}, "output_params": [{"name": "final_script", "type": "string"}]}
+  ],
+  "edges": [{"source": "start", "target": "scene_router"}, {"source": "scene_router", "target": "bad_review_gen", "label": "差评回复"}, {"source": "scene_router", "target": "refund_gen", "label": "退货退款"}, {"source": "scene_router", "target": "complaint_gen", "label": "投诉处理"}, {"source": "scene_router", "target": "ask_review_gen", "label": "好评引导"}, {"source": "bad_review_gen", "target": "end"}, {"source": "refund_gen", "target": "end"}, {"source": "complaint_gen", "target": "end"}, {"source": "ask_review_gen", "target": "end"}]
+}

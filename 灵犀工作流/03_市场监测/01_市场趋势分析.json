@@ -1,0 +1,18 @@
+{
+  "workflow_id": "market_trends",
+  "name": "市场趋势分析",
+  "description": "全网电商趋势监测：热销品类/消费趋势/平台动态/新兴市场机会",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {"node_id": "start", "type": "Start", "name": "趋势分析触发", "position": {"x": 250, "y": 50}, "input_params": [{"name": "category", "type": "string", "description": "关注品类（可选，留空则全品类）", "required": false}, {"name": "time_range", "type": "string", "description": "时间范围", "required": false, "default": "最近7天"}], "output_params": [{"name": "category", "type": "string"}, {"name": "time_range", "type": "string"}]},
+    {"node_id": "trend_search", "type": "HTTP", "name": "趋势数据采集", "position": {"x": 250, "y": 180}, "plugin": "web_search", "search_query": "电商趋势 热销品类 消费趋势 2025 2026 {{category}}", "max_results": 15,
+      "input_params": [{"name": "category", "type": "string", "source": "start.category"}], "output_params": [{"name": "trend_data", "type": "array"}]},
+    {"node_id": "trend_analysis", "type": "LLM", "name": "趋势分析引擎", "position": {"x": 250, "y": 330}, "model": "doubao-pro-128k", "temperature": 0.4, "max_tokens": 5000,
+      "prompt_template": "你是电商趋势分析师。基于以下数据生成趋势分析报告。\n\n品类：{{category}}\n时间范围：{{time_range}}\n趋势数据：{{trend_search.trend_data}}\n\n输出：\n## 📈 整体趋势概览\n## 🔥 热销品类Top10\n## 📊 价格带分布\n## 🎯 新兴机会点\n## 🌍 平台差异化趋势\n## ⚡ 短期热点（7天内）\n## 📅 长期趋势（3-6个月）\n## 💡 行动建议\n\n每个趋势附：热度指数（1-10）、增长趋势（↑/→/↓）、置信度。",
+      "input_params": [{"name": "category", "type": "string", "source": "start.category"}, {"name": "time_range", "type": "string", "source": "start.time_range"}, {"name": "trend_data", "type": "array", "source": "trend_search.trend_data"}],
+      "output_params": [{"name": "trend_report", "type": "string"}]},
+    {"node_id": "end", "type": "End", "name": "输出趋势报告", "position": {"x": 250, "y": 490}, "output_params": [{"name": "final_report", "type": "string", "source": "trend_analysis.trend_report"}]}
+  ],
+  "edges": [{"source": "start", "target": "trend_search"}, {"source": "trend_search", "target": "trend_analysis"}, {"source": "trend_analysis", "target": "end"}]
+}

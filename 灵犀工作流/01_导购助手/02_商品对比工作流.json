@@ -1,0 +1,26 @@
+{
+  "workflow_id": "product_compare",
+  "name": "多商品对比分析",
+  "description": "接收用户要对比的2+商品 → 多维度参数提取 → 联网获取最新信息 → 表格化对比 → 综合评分 → 购买建议",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {"node_id": "start", "type": "Start", "name": "对比请求输入", "position": {"x": 250, "y": 50}, "input_params": [{"name": "products", "type": "array", "description": "要对比的商品名称列表", "required": true}, {"name": "user_budget", "type": "string", "description": "预算范围", "required": false}], "output_params": [{"name": "products", "type": "array"}, {"name": "user_budget", "type": "string"}]},
+    {"node_id": "extract_params", "type": "LLM", "name": "商品参数提取", "position": {"x": 250, "y": 180}, "model": "doubao-pro-32k", "temperature": 0.2, "prompt_template": "从以下商品名称中提取关键参数信息，以JSON格式输出每个商品的核心参数。\n\n商品列表：{{products}}\n\n对每个商品提取：\n- 品牌、型号\n- 核心规格参数\n- 价格区间\n- 适用场景",
+      "input_params": [{"name": "products", "type": "array", "source": "start.products"}], "output_params": [{"name": "product_params", "type": "array"}]},
+    {"node_id": "web_search", "type": "HTTP", "name": "联网搜索对比信息", "position": {"x": 420, "y": 180}, "plugin": "web_search", "search_query": "{{products}} 对比 评测 2025 哪个好", "max_results": 8,
+      "input_params": [{"name": "products", "type": "array", "source": "start.products"}], "output_params": [{"name": "search_results", "type": "array"}]},
+    {"node_id": "compare_engine", "type": "LLM", "name": "多维对比引擎", "position": {"x": 335, "y": 330}, "model": "doubao-pro-128k", "temperature": 0.4, "max_tokens": 4096,
+      "prompt_template": "你是专业商品对比分析师。基于以下信息生成多维对比报告。\n\n商品参数：{{extract_params.product_params}}\n搜索信息：{{web_search.search_results}}\n用户预算：{{user_budget}}\n\n输出格式：\n## 📊 多维度对比表\n| 维度 | 商品A | 商品B | 商品C |\n|------|-------|-------|-------|\n## 🏆 综合评分（10分制）\n## 💡 场景化建议\n## 🎯 最终推荐\n\n用通俗语言解释参数差异对使用体验的影响。",
+      "input_params": [{"name": "product_params", "type": "array", "source": "extract_params.product_params"}, {"name": "search_results", "type": "array", "source": "web_search.search_results"}, {"name": "user_budget", "type": "string", "source": "start.user_budget"}],
+      "output_params": [{"name": "comparison_result", "type": "string"}]},
+    {"node_id": "end", "type": "End", "name": "输出对比结果", "position": {"x": 335, "y": 480}, "output_params": [{"name": "final_result", "type": "string", "source": "compare_engine.comparison_result"}]}
+  ],
+  "edges": [
+    {"source": "start", "target": "extract_params"},
+    {"source": "start", "target": "web_search"},
+    {"source": "extract_params", "target": "compare_engine"},
+    {"source": "web_search", "target": "compare_engine"},
+    {"source": "compare_engine", "target": "end"}
+  ]
+}

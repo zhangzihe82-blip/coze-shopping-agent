@@ -1,0 +1,20 @@
+{
+  "workflow_id": "product_pick",
+  "name": "智能选品推荐",
+  "description": "基于预算+平台+品类 → 市场数据分析 → 利润测算 → 风险提示 → 选品建议",
+  "version": "1.0.0",
+  "entry_node": "start",
+  "nodes": [
+    {"node_id": "start", "type": "Start", "name": "选品需求输入", "position": {"x": 250, "y": 50}, "input_params": [{"name": "budget", "type": "string", "description": "预算范围（如1-5万）", "required": true}, {"name": "platform", "type": "string", "description": "目标平台", "required": true}, {"name": "category_preference", "type": "string", "description": "偏好品类（可选）", "required": false}], "output_params": [{"name": "budget", "type": "string"}, {"name": "platform", "type": "string"}, {"name": "category_preference", "type": "string"}]},
+    {"node_id": "market_search", "type": "HTTP", "name": "市场趋势搜索", "position": {"x": 150, "y": 180}, "plugin": "web_search", "search_query": "{{platform}} 热门品类 销量排行 2025 2026 {{category_preference}}", "max_results": 10,
+      "input_params": [{"name": "platform", "type": "string", "source": "start.platform"}, {"name": "category_preference", "type": "string", "source": "start.category_preference"}], "output_params": [{"name": "market_data", "type": "array"}]},
+    {"node_id": "competitor_search", "type": "HTTP", "name": "竞品价格搜索", "position": {"x": 350, "y": 180}, "plugin": "web_search", "search_query": "{{platform}} 小成本创业 利润高 热门产品 进货价 2025", "max_results": 10,
+      "input_params": [{"name": "platform", "type": "string", "source": "start.platform"}], "output_params": [{"name": "competitor_data", "type": "array"}]},
+    {"node_id": "analysis_engine", "type": "LLM", "name": "选品分析引擎", "position": {"x": 250, "y": 340}, "model": "doubao-pro-128k", "temperature": 0.6, "max_tokens": 5000,
+      "prompt_template": "你是资深电商选品分析师。基于以下信息给出选品建议。\n\n预算：{{budget}}\n平台：{{platform}}\n偏好品类：{{category_preference}}\n市场数据：{{market_search.market_data}}\n竞品数据：{{competitor_search.competitor_data}}\n\n输出结构：\n## 📊 市场机会分析\n## 🎯 推荐选品方向（3个）\n   - 方向名称\n   - 目标人群\n   - 预估市场容量\n   - 竞争程度分析\n## 💰 利润测算\n   - 进货成本估算\n   - 平台费用\n   - 预期利润率\n   - 回本周期\n## ⚠️ 风险提示\n## 🚀 启动建议\n## 📋 下一步行动清单",
+      "input_params": [{"name": "budget", "type": "string", "source": "start.budget"}, {"name": "platform", "type": "string", "source": "start.platform"}, {"name": "category_preference", "type": "string", "source": "start.category_preference"}, {"name": "market_data", "type": "array", "source": "market_search.market_data"}, {"name": "competitor_data", "type": "array", "source": "competitor_search.competitor_data"}],
+      "output_params": [{"name": "analysis_result", "type": "string"}]},
+    {"node_id": "end", "type": "End", "name": "输出选品方案", "position": {"x": 250, "y": 500}, "output_params": [{"name": "final_result", "type": "string", "source": "analysis_engine.analysis_result"}]}
+  ],
+  "edges": [{"source": "start", "target": "market_search"}, {"source": "start", "target": "competitor_search"}, {"source": "market_search", "target": "analysis_engine"}, {"source": "competitor_search", "target": "analysis_engine"}, {"source": "analysis_engine", "target": "end"}]
+}
